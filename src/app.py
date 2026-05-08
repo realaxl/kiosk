@@ -4,11 +4,11 @@ from pathlib import Path
 from PIL import Image
 import os
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='../templates')
 
 def get_db_connection():
     """Create a database connection"""
-    conn = sqlite3.connect('db/db.sqlite')
+    conn = sqlite3.connect('../db/db.sqlite')
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -47,8 +47,8 @@ def index():
 def serve_image(filename):
     """Serve cached thumbnail or generate it if it doesn't exist"""
     # Define paths
-    original_path = Path('images') / filename
-    cache_dir = Path('images') / 'cache'
+    original_path = Path('../images') / filename
+    cache_dir = Path('../images') / 'cache'
     
     # Create cache filename (change extension to .jpg)
     cache_filename = Path(filename).stem + '.jpg'
@@ -64,10 +64,10 @@ def serve_image(filename):
         cache_dir.mkdir(parents=True, exist_ok=True)
         if not generate_thumbnail(original_path, cache_path):
             # If thumbnail generation fails, serve original
-            return send_from_directory('images', filename)
+            return send_from_directory('../images', filename)
     
     # Serve the cached thumbnail
-    return send_from_directory('images/cache', cache_filename)
+    return send_from_directory('../images/cache', cache_filename)
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

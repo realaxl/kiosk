@@ -2,7 +2,7 @@ import sqlite3
 from pathlib import Path
 
 # Create db directory if it doesn't exist
-db_dir = Path("db")
+db_dir = Path("../db")
 db_dir.mkdir(exist_ok=True)
 
 # Database file path

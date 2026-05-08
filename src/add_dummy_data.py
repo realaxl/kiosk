@@ -4,14 +4,14 @@ import time
 import os
 
 # Check if database exists
-db_path = Path("db/db.sqlite")
+db_path = Path("../db/db.sqlite")
 if not db_path.exists():
     print(f"Database does not exist at {db_path}")
     print("Please run create_database.py first")
     exit(1)
 
 # Get image files from images folder
-images_dir = Path("images")
+images_dir = Path("../images")
 if not images_dir.exists():
     print(f"Images directory does not exist")
     exit(1)
