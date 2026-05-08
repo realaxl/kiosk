@@ -42,6 +42,7 @@ env/
 Thumbs.db
 
 # Project specific
-images/cache/
+images/
+db/
 
 # Made with Bob
