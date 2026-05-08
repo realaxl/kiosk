@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Catalog</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .product-card {
+            height: 100%;
+            transition: transform 0.2s;
+        }
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .product-image {
+            width: 100%;
+            height: 300px;
+            object-fit: cover;
+        }
+        .card-header {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+        .card-footer {
+            background-color: #e9ecef;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-dark bg-primary mb-4">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1">Product Catalog</span>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            {% for product in products %}
+            <div class="col">
+                <div class="card product-card">
+                    <div class="card-header">
+                        {{ product['name'] }}
+                    </div>
+                    <div class="card-body p-0">
+                        {% if product['imageUrl'] %}
+                        <img src="{{ url_for('serve_image', filename=product['imageUrl']) }}" 
+                             class="product-image" 
+                             alt="{{ product['name'] }}">
+                        {% else %}
+                        <div class="product-image d-flex align-items-center justify-content-center bg-light">
+                            <span class="text-muted">No image available</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="card-footer">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-muted">Price:</span>
+                            <span class="h5 mb-0 text-success">€{{ "%.2f"|format(product['purchasePrice']) }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        {% if not products %}
+        <div class="alert alert-info text-center mt-5" role="alert">
+            <h4 class="alert-heading">No products found</h4>
+            <p>There are currently no active products in the catalog.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

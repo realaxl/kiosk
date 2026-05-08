@@ -1,0 +1,43 @@
+erDiagram
+     stocks ||--o{ products : contains
+     events ||--o{ stocks : has
+     stocks ||--o{ sales : has
+
+     events {
+         int eventId PK
+         string name
+         int timestamp
+         string description
+         string note
+         int active
+     }
+
+     products {
+         int productId PK
+         string name
+         int timestamp
+         float purchasePrice
+         string description
+         string imageUrl
+         string manualUrl
+         string note
+         int active
+     }
+
+     stocks {
+         int stockId PK
+         int eventId FK
+         int productId FK
+         int numberInStock
+         float salePrice
+         string note
+         int active
+     }
+
+     sales {
+         int saleId PK
+         int stockId FK
+         int numberItemsSold
+         int timestamp
+         string note
+     }
