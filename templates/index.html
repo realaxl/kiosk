@@ -30,6 +30,13 @@
         .card-footer {
             background-color: #e9ecef;
         }
+        .gap-1 {
+            gap: 0.25rem;
+        }
+        .badge-sm {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+        }
     </style>
 </head>
 <body>
@@ -44,8 +51,19 @@
             {% for product in products %}
             <div class="col">
                 <div class="card product-card" onclick="openEditModal({{ product['productId'] }})">
-                    <div class="card-header">
-                        {{ product['name'] }}
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>{{ product['name'] }}</span>
+                        <!-- DEBUG: tags={{ product.get('tags', 'NO TAGS KEY') }} -->
+                        {% if 'tags' in product and product['tags']|length > 0 %}
+                        <!-- DEBUG: Rendering tags for {{ product['name'] }} -->
+                        <div class="d-flex gap-1">
+                            {% for tag in product['tags'] %}
+                            <span class="badge bg-info text-dark badge-sm">{{ tag['value'] }}</span>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <!-- DEBUG: No tags or empty for {{ product['name'] }} -->
+                        {% endif %}
                     </div>
                     <div class="card-body p-0">
                         {% if product['imageUrl'] %}

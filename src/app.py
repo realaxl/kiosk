@@ -44,9 +44,31 @@ def generate_thumbnail(image_path, cache_path, max_size=1024):
 def index():
     """Main page showing all products"""
     conn = get_db_connection()
+    
+    # Get all active products
     products = conn.execute('SELECT * FROM products WHERE active = 1').fetchall()
+    
+    # Get tags for each product
+    products_with_tags = []
+    for product in products:
+        product_dict = dict(product)
+        
+        # Fetch tags for this product
+        tags = conn.execute('''
+            SELECT name, value FROM tags
+            WHERE productId = ? AND active = 1
+        ''', (product['productId'],)).fetchall()
+        
+        product_dict['tags'] = [dict(tag) for tag in tags]
+        products_with_tags.append(product_dict)
+        
+        # Debug output
+        print(f"[DEBUG] Product: {product_dict['name']}")
+        print(f"[DEBUG]   productId: {product_dict['productId']}")
+        print(f"[DEBUG]   tags: {product_dict['tags']}")
+    
     conn.close()
-    return render_template('index.html', products=products)
+    return render_template('index.html', products=products_with_tags)
 
 @app.route('/images/<path:filename>')
 def serve_image(filename):
