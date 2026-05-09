@@ -2,7 +2,7 @@
 2026-05
 
 
-# env
+## envs
 
 * dev
     * Windows 11
@@ -10,4 +10,9 @@
     * uv
     * Python 3
 * prod
-    * Raspberry Pi
+    * Raspberry Pi 400
+    * KioskPi
+
+
+## KioskPi
+
