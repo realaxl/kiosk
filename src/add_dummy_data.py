@@ -4,19 +4,19 @@ import time
 import os
 
 # Check if database exists
-db_path = Path("../db/db.sqlite")
+db_path = Path("db.sqlite")
 if not db_path.exists():
     print(f"Database does not exist at {db_path}")
-    print("Please run create_database.py first")
+    print("Stopping here as instructed")
     exit(1)
 
 # Get image files from images folder
-images_dir = Path("../images")
+images_dir = Path("images")
 if not images_dir.exists():
     print(f"Images directory does not exist")
     exit(1)
 
-# Get all image files (excluding cache directory)
+# Get all image files
 image_files = []
 for file in images_dir.iterdir():
     if file.is_file() and file.suffix.lower() in ['.jpg', '.jpeg', '.png', '.gif', '.webp']:
@@ -36,9 +36,11 @@ cursor = conn.cursor()
 current_timestamp = int(time.time())
 
 # Process each image file
+added_count = 0
+skipped_count = 0
+
 for image_file in image_files:
-    # Extract product name from filename
-    # Remove file extension and dimensions suffix (e.g., _1920x1920)
+    # Extract product name from filename (product part before extension)
     product_name = image_file.rsplit('.', 1)[0]  # Remove extension
     
     # Remove dimension suffix if present (pattern: _NNNNxNNNN)
@@ -49,6 +51,15 @@ for image_file in image_files:
     
     # Replace underscores and hyphens with spaces for better readability
     product_name = product_name.replace('_', ' ').replace('-', ' ')
+    
+    # Check if product with this name already exists
+    cursor.execute("SELECT COUNT(*) FROM products WHERE name = ?", (product_name,))
+    exists = cursor.fetchone()[0] > 0
+    
+    if exists:
+        print(f"Skipped (already exists): {product_name}")
+        skipped_count += 1
+        continue
     
     # Insert product into database
     cursor.execute("""
@@ -65,11 +76,14 @@ for image_file in image_files:
     ))
     
     print(f"Added product: {product_name} (image: {image_file})")
+    added_count += 1
 
 # Commit changes and close connection
 conn.commit()
 conn.close()
 
-print(f"\nSuccessfully added {len(image_files)} products to the database")
+print(f"\nSummary:")
+print(f"  Added: {added_count} products")
+print(f"  Skipped: {skipped_count} products (already existed)")
 
 # Made with Bob

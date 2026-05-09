@@ -47,12 +47,17 @@ def index():
 def serve_image(filename):
     """Serve cached thumbnail or generate it if it doesn't exist"""
     # Define paths
-    original_path = Path('../images') / filename
-    cache_dir = Path('../images') / 'cache'
+    images_dir = Path('../images')
+    original_path = images_dir / filename
+    cache_dir = images_dir / 'cache'
     
     # Create cache filename (change extension to .jpg)
     cache_filename = Path(filename).stem + '.jpg'
     cache_path = cache_dir / cache_filename
+    
+    # Check if images directory exists
+    if not images_dir.exists():
+        return "Images directory not found", 404
     
     # Check if original image exists
     if not original_path.exists():
@@ -64,10 +69,10 @@ def serve_image(filename):
         cache_dir.mkdir(parents=True, exist_ok=True)
         if not generate_thumbnail(original_path, cache_path):
             # If thumbnail generation fails, serve original
-            return send_from_directory('../images', filename)
+            return send_from_directory(str(images_dir), filename)
     
     # Serve the cached thumbnail
-    return send_from_directory('../images/cache', cache_filename)
+    return send_from_directory(str(cache_dir), cache_filename)
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
