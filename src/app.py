@@ -1,8 +1,9 @@
-from flask import Flask, render_template, send_from_directory
+from flask import Flask, render_template, send_from_directory, jsonify, request
 import sqlite3
 from pathlib import Path
 from PIL import Image
 import os
+import time
 
 app = Flask(__name__, template_folder='../templates')
 
@@ -83,6 +84,72 @@ def serve_image(filename):
     
     # Always serve from cache directory (never the original)
     return send_from_directory(str(cache_dir), cache_filename)
+
+@app.route('/api/product/<int:product_id>')
+def get_product(product_id):
+    """Get product details by ID"""
+    conn = get_db_connection()
+    product = conn.execute('SELECT * FROM products WHERE productId = ?', (product_id,)).fetchone()
+    conn.close()
+    
+    if product is None:
+        return jsonify({'error': 'Product not found'}), 404
+    
+    return jsonify(dict(product))
+
+@app.route('/api/product/<int:product_id>', methods=['PUT'])
+def update_product(product_id):
+    """Update product details"""
+    data = request.get_json()
+    
+    conn = get_db_connection()
+    
+    # Check if product exists
+    product = conn.execute('SELECT * FROM products WHERE productId = ?', (product_id,)).fetchone()
+    if product is None:
+        conn.close()
+        return jsonify({'error': 'Product not found'}), 404
+    
+    # Update product
+    try:
+        # Use current timestamp if not provided
+        timestamp = data.get('timestamp', int(time.time()))
+        
+        # Use 0 as default price if not provided or empty
+        purchase_price = data.get('purchasePrice')
+        if purchase_price is None or purchase_price == '':
+            purchase_price = 0
+        else:
+            purchase_price = float(purchase_price)
+        
+        conn.execute('''
+            UPDATE products
+            SET name = ?,
+                timestamp = ?,
+                purchasePrice = ?,
+                description = ?,
+                imageUrl = ?,
+                manualUrl = ?,
+                note = ?,
+                active = ?
+            WHERE productId = ?
+        ''', (
+            data.get('name'),
+            timestamp,
+            purchase_price,
+            data.get('description'),
+            data.get('imageUrl'),
+            data.get('manualUrl'),
+            data.get('note'),
+            1 if data.get('active') else 0,
+            product_id
+        ))
+        conn.commit()
+        conn.close()
+        return jsonify({'success': True, 'message': 'Product updated successfully'})
+    except Exception as e:
+        conn.close()
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
