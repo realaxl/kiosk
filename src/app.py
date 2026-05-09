@@ -6,9 +6,13 @@ import os
 
 app = Flask(__name__, template_folder='../templates')
 
+# Get the project root directory (parent of src directory)
+PROJECT_ROOT = Path(__file__).parent.parent
+
 def get_db_connection():
     """Create a database connection"""
-    conn = sqlite3.connect('../db/db.sqlite')
+    db_path = PROJECT_ROOT / 'db' / 'db.sqlite'
+    conn = sqlite3.connect(str(db_path))
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -46,8 +50,8 @@ def index():
 @app.route('/images/<path:filename>')
 def serve_image(filename):
     """Serve cached thumbnail, generate if it doesn't exist, then always serve from cache"""
-    # Define paths (images folder is in project root, one level up from src)
-    images_dir = Path(__file__).parent.parent / 'images'
+    # Define paths using project root
+    images_dir = PROJECT_ROOT / 'images'
     cache_dir = images_dir / 'cache'
     
     # Determine cache filename: PNG files are converted to JPG in cache
