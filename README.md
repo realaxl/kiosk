@@ -16,3 +16,5 @@
 
 ## KioskPi
 
+Raspberry Pi Auto-Update Setup
+/tmp/kiosk-auto-update.log
