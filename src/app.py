@@ -60,9 +60,6 @@ def serve_image(filename):
     cache_path = cache_dir / cache_filename
     
     print(f"[IMAGE REQUEST] Requested: {filename}")
-    print(f"[IMAGE REQUEST] Cache filename: {cache_filename}")
-    print(f"[IMAGE REQUEST] Cache path: {cache_path}")
-    print(f"[IMAGE REQUEST] Cache exists: {cache_path.exists()}")
     
     # Check if cache directory exists
     if not cache_dir.exists():
@@ -72,19 +69,14 @@ def serve_image(filename):
     if not cache_path.exists():
         original_path = images_dir / filename
         
-        print(f"[IMAGE REQUEST] Cache not found, checking original: {original_path}")
-        
         # Check if original image exists
         if not original_path.exists():
             return f"Original image not found: {filename}", 404
         
-        print(f"[IMAGE REQUEST] Generating thumbnail...")
         # Generate thumbnail
         if not generate_thumbnail(original_path, cache_path):
             return "Failed to generate thumbnail", 500
-        print(f"[IMAGE REQUEST] Thumbnail generated successfully")
     
-    print(f"[IMAGE REQUEST] Serving from cache: {cache_dir} / {cache_filename}")
     # Always serve from cache directory (never the original)
     return send_from_directory(str(cache_dir), cache_filename)
 
