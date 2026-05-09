@@ -4,7 +4,7 @@ import time
 import os
 
 # Check if database exists
-db_path = Path("db.sqlite")
+db_path = Path("../db/db.sqlite")
 if not db_path.exists():
     print(f"Database does not exist at {db_path}")
     print("Stopping here as instructed")

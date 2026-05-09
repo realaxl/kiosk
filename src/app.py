@@ -45,33 +45,47 @@ def index():
 
 @app.route('/images/<path:filename>')
 def serve_image(filename):
-    """Serve cached thumbnail or generate it if it doesn't exist"""
-    # Define paths
-    images_dir = Path('../images')
-    original_path = images_dir / filename
+    """Serve cached thumbnail, generate if it doesn't exist, then always serve from cache"""
+    # Define paths (images folder is in project root, one level up from src)
+    images_dir = Path(__file__).parent.parent / 'images'
     cache_dir = images_dir / 'cache'
     
-    # Create cache filename (change extension to .jpg)
-    cache_filename = Path(filename).stem + '.jpg'
+    # Determine cache filename: PNG files are converted to JPG in cache
+    file_ext = Path(filename).suffix.lower()
+    if file_ext == '.png':
+        cache_filename = Path(filename).stem + '.jpg'
+    else:
+        cache_filename = filename
+    
     cache_path = cache_dir / cache_filename
     
-    # Check if images directory exists
-    if not images_dir.exists():
-        return "Images directory not found", 404
+    print(f"[IMAGE REQUEST] Requested: {filename}")
+    print(f"[IMAGE REQUEST] Cache filename: {cache_filename}")
+    print(f"[IMAGE REQUEST] Cache path: {cache_path}")
+    print(f"[IMAGE REQUEST] Cache exists: {cache_path.exists()}")
     
-    # Check if original image exists
-    if not original_path.exists():
-        return "Image not found", 404
-    
-    # Check if cached thumbnail exists
-    if not cache_path.exists():
-        # Generate thumbnail
+    # Check if cache directory exists
+    if not cache_dir.exists():
         cache_dir.mkdir(parents=True, exist_ok=True)
-        if not generate_thumbnail(original_path, cache_path):
-            # If thumbnail generation fails, serve original
-            return send_from_directory(str(images_dir), filename)
     
-    # Serve the cached thumbnail
+    # If cached thumbnail doesn't exist, generate it
+    if not cache_path.exists():
+        original_path = images_dir / filename
+        
+        print(f"[IMAGE REQUEST] Cache not found, checking original: {original_path}")
+        
+        # Check if original image exists
+        if not original_path.exists():
+            return f"Original image not found: {filename}", 404
+        
+        print(f"[IMAGE REQUEST] Generating thumbnail...")
+        # Generate thumbnail
+        if not generate_thumbnail(original_path, cache_path):
+            return "Failed to generate thumbnail", 500
+        print(f"[IMAGE REQUEST] Thumbnail generated successfully")
+    
+    print(f"[IMAGE REQUEST] Serving from cache: {cache_dir} / {cache_filename}")
+    # Always serve from cache directory (never the original)
     return send_from_directory(str(cache_dir), cache_filename)
 
 if __name__ == '__main__':
