@@ -3,15 +3,18 @@ from pathlib import Path
 import time
 import os
 
+# Get the project root directory (parent of src directory)
+PROJECT_ROOT = Path(__file__).parent.parent
+
 # Check if database exists
-db_path = Path("../db/db.sqlite")
+db_path = PROJECT_ROOT / "db" / "db.sqlite"
 if not db_path.exists():
     print(f"Database does not exist at {db_path}")
     print("Stopping here as instructed")
     exit(1)
 
 # Get image files from images folder
-images_dir = Path("images")
+images_dir = PROJECT_ROOT / "images"
 if not images_dir.exists():
     print(f"Images directory does not exist")
     exit(1)

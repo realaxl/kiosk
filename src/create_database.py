@@ -1,8 +1,11 @@
 import sqlite3
 from pathlib import Path
 
+# Get the project root directory (parent of src directory)
+PROJECT_ROOT = Path(__file__).parent.parent
+
 # Create db directory if it doesn't exist
-db_dir = Path("../db")
+db_dir = PROJECT_ROOT / "db"
 db_dir.mkdir(exist_ok=True)
 
 # Database file path
