@@ -4,18 +4,598 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Product Categories Management</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='admin.css') }}">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f5f5;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-block;
+            transition: transform 0.2s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-warning {
+            background: #ffc107;
+            color: #333;
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+        
+        .toolbar {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        .table-container {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .badge {
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .badge-active {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .badge-inactive {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .toggle {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .toggle input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+        }
+        
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.3s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 0;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 600px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+            animation: slideDown 0.3s;
+        }
+        
+        @keyframes slideDown {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        .modal-header {
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px 10px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-header h2 {
+            margin: 0;
+            font-size: 20px;
+        }
+        
+        .close {
+            color: white;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 5px;
+            transition: background 0.2s;
+        }
+        
+        .close:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .modal-body {
+            padding: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .form-group input[type="text"],
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+        
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        
+        .form-group input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+        }
+        
+        .modal-footer {
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 0 0 10px 10px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        
+        .actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            display: none;
+        }
+        
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            display: none;
+        }
+        
+        .image-preview {
+            max-width: 100px;
+            max-height: 100px;
+            object-fit: cover;
+            border-radius: 5px;
+        }
+    </style>
 </head>
 <body>
     <div class="header">
         <div class="header-content">
             <h1>📂 Product Categories Management</h1>
-            <a href="/admin" class="btn btn-secondary">← Back to Dashboard</a>
+            <div>
+                <a href="/admin" class="btn btn-secondary">← Back to Dashboard</a>
+            </div>
         </div>
     </div>
+    
     <div class="container">
-        <h2>Product Categories - Coming Soon</h2>
-        <p>This page will allow you to manage product categories.</p>
+        <div class="toolbar">
+            <button class="btn btn-primary" onclick="openAddModal()">+ Add Category</button>
+            <div class="toggle">
+                <input type="checkbox" id="showAll" {% if show_all %}checked{% endif %}
+                       onchange="toggleShowAll(this)">
+                <label for="showAll">Show All (including inactive)</label>
+            </div>
+        </div>
+        
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Description</th>
+                        <th>Image</th>
+                        <th>Note</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="categoriesTableBody">
+                    {% for category in categories %}
+                    <tr>
+                        <td>{{ category.productCategoryId }}</td>
+                        <td><strong>{{ category.name }}</strong></td>
+                        <td>{{ category.description or '-' }}</td>
+                        <td>
+                            {% if category.image %}
+                            <img src="{{ category.image }}" alt="{{ category.name }}" class="image-preview">
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
+                        <td>{{ category.note or '-' }}</td>
+                        <td>
+                            {% if category.active %}
+                            <span class="badge badge-active">Active</span>
+                            {% else %}
+                            <span class="badge badge-inactive">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="actions">
+                                <button class="btn btn-primary" onclick="openEditModal({{ category.productCategoryId }})">Edit</button>
+                                {% if category.active %}
+                                <button class="btn btn-warning" onclick="toggleActive({{ category.productCategoryId }}, true)">Deactivate</button>
+                                {% else %}
+                                <button class="btn btn-success" onclick="toggleActive({{ category.productCategoryId }}, false)">Activate</button>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
+    
+    <!-- Modal for Add/Edit Category -->
+    <div id="categoryModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Add Category</h2>
+                <button class="close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="errorMessage" class="error-message"></div>
+                <div id="successMessage" class="success-message"></div>
+                
+                <form id="categoryForm">
+                    <input type="hidden" id="categoryId" value="">
+                    
+                    <div class="form-group">
+                        <label for="categoryName">Name *</label>
+                        <input type="text" id="categoryName" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="categoryDescription">Description</label>
+                        <textarea id="categoryDescription" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="categoryImage">Image URL</label>
+                        <input type="text" id="categoryImage" placeholder="https://example.com/image.jpg">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="categoryNote">Note</label>
+                        <textarea id="categoryNote" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="categoryActive" checked>
+                            <label for="categoryActive">Active</label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="saveCategory()">Save</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let currentCategories = [];
+        
+        function toggleShowAll(checkbox) {
+            window.location.href = '?show_all=' + checkbox.checked;
+        }
+        
+        function openAddModal() {
+            document.getElementById('modalTitle').textContent = 'Add Category';
+            document.getElementById('categoryId').value = '';
+            document.getElementById('categoryForm').reset();
+            document.getElementById('categoryActive').checked = true;
+            document.getElementById('errorMessage').style.display = 'none';
+            document.getElementById('successMessage').style.display = 'none';
+            document.getElementById('categoryModal').style.display = 'block';
+        }
+        
+        async function openEditModal(categoryId) {
+            try {
+                const response = await fetch('/admin/api/product-categories');
+                const categories = await response.json();
+                const category = categories.find(c => c.productCategoryId === categoryId);
+                
+                if (category) {
+                    document.getElementById('modalTitle').textContent = 'Edit Category';
+                    document.getElementById('categoryId').value = category.productCategoryId;
+                    document.getElementById('categoryName').value = category.name || '';
+                    document.getElementById('categoryDescription').value = category.description || '';
+                    document.getElementById('categoryImage').value = category.image || '';
+                    document.getElementById('categoryNote').value = category.note || '';
+                    document.getElementById('categoryActive').checked = category.active === 1;
+                    document.getElementById('errorMessage').style.display = 'none';
+                    document.getElementById('successMessage').style.display = 'none';
+                    document.getElementById('categoryModal').style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error loading category:', error);
+                alert('Error loading category data');
+            }
+        }
+        
+        function closeModal() {
+            document.getElementById('categoryModal').style.display = 'none';
+        }
+        
+        async function saveCategory() {
+            const categoryId = document.getElementById('categoryId').value;
+            const name = document.getElementById('categoryName').value.trim();
+            const description = document.getElementById('categoryDescription').value.trim();
+            const image = document.getElementById('categoryImage').value.trim();
+            const note = document.getElementById('categoryNote').value.trim();
+            const active = document.getElementById('categoryActive').checked;
+            
+            // Validation
+            if (!name) {
+                showError('Category name is required');
+                return;
+            }
+            
+            const categoryData = {
+                name: name,
+                description: description,
+                image: image,
+                note: note,
+                active: active
+            };
+            
+            try {
+                let response;
+                if (categoryId) {
+                    // Update existing category
+                    response = await fetch(`/admin/api/product-categories/${categoryId}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(categoryData)
+                    });
+                } else {
+                    // Create new category
+                    response = await fetch('/admin/api/product-categories', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(categoryData)
+                    });
+                }
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showSuccess(categoryId ? 'Category updated successfully' : 'Category created successfully');
+                    setTimeout(() => {
+                        closeModal();
+                        window.location.reload();
+                    }, 1000);
+                } else {
+                    showError(result.error || 'Error saving category');
+                }
+            } catch (error) {
+                console.error('Error saving category:', error);
+                showError('Error saving category: ' + error.message);
+            }
+        }
+        
+        async function toggleActive(categoryId, isCurrentlyActive) {
+            const action = isCurrentlyActive ? 'deactivate' : 'activate';
+            if (!confirm(`Are you sure you want to ${action} this category?`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/admin/api/product-categories');
+                const categories = await response.json();
+                const category = categories.find(c => c.productCategoryId === categoryId);
+                
+                if (category) {
+                    category.active = !isCurrentlyActive;
+                    
+                    const updateResponse = await fetch(`/admin/api/product-categories/${categoryId}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(category)
+                    });
+                    
+                    const result = await updateResponse.json();
+                    
+                    if (result.success) {
+                        window.location.reload();
+                    } else {
+                        alert('Error updating category status');
+                    }
+                }
+            } catch (error) {
+                console.error('Error toggling category status:', error);
+                alert('Error updating category status');
+            }
+        }
+        
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            document.getElementById('successMessage').style.display = 'none';
+        }
+        
+        function showSuccess(message) {
+            const successDiv = document.getElementById('successMessage');
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+            document.getElementById('errorMessage').style.display = 'none';
+        }
+        
+        // Close modal when clicking outside of it
+        window.onclick = function(event) {
+            const modal = document.getElementById('categoryModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        }
+        
+        // Close modal with Escape key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeModal();
+            }
+        });
+    </script>
 </body>
 </html>
