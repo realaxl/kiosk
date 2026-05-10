@@ -28,7 +28,7 @@ SCHEMA = {
             "productCategoryId": "INTEGER PRIMARY KEY",
             "name": "TEXT NOT NULL",
             "description": "TEXT",
-            "imageUrl": "TEXT",
+            "image": "TEXT",
             "note": "TEXT",
             "active": "INTEGER NOT NULL DEFAULT 1"
         }
@@ -41,7 +41,8 @@ SCHEMA = {
             "timestamp": "INTEGER NOT NULL",
             "purchasePrice": "REAL NOT NULL",
             "description": "TEXT",
-            "imageUrl": "TEXT",
+            "image": "TEXT",
+            "url": "TEXT",
             "manualUrl": "TEXT",
             "note": "TEXT",
             "active": "INTEGER NOT NULL DEFAULT 1"

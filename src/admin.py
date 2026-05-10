@@ -164,12 +164,12 @@ def create_product_category():
     
     try:
         cursor = conn.execute('''
-            INSERT INTO productCategories (name, description, imageUrl, note, active)
+            INSERT INTO productCategories (name, description, image, note, active)
             VALUES (?, ?, ?, ?, ?)
         ''', (
             data.get('name'),
             data.get('description', ''),
-            data.get('imageUrl', ''),
+            data.get('image', ''),
             data.get('note', ''),
             1 if data.get('active', True) else 0
         ))
@@ -191,12 +191,12 @@ def update_product_category(category_id):
     try:
         conn.execute('''
             UPDATE productCategories
-            SET name = ?, description = ?, imageUrl = ?, note = ?, active = ?
+            SET name = ?, description = ?, image = ?, note = ?, active = ?
             WHERE productCategoryId = ?
         ''', (
             data.get('name'),
             data.get('description'),
-            data.get('imageUrl'),
+            data.get('image'),
             data.get('note'),
             1 if data.get('active') else 0,
             category_id
@@ -262,15 +262,16 @@ def create_product():
     
     try:
         cursor = conn.execute('''
-            INSERT INTO products (productCategoryId, name, timestamp, purchasePrice, description, imageUrl, manualUrl, note, active)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO products (productCategoryId, name, timestamp, purchasePrice, description, image, url, manualUrl, note, active)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
             data.get('productCategoryId'),
             data.get('name'),
             data.get('timestamp', int(time.time())),
             data.get('purchasePrice', 0),
             data.get('description', ''),
-            data.get('imageUrl', ''),
+            data.get('image', ''),
+            data.get('url', ''),
             data.get('manualUrl', ''),
             data.get('note', ''),
             1 if data.get('active', True) else 0
