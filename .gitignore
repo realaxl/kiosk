@@ -46,3 +46,4 @@ images/
 db/
 
 # Made with Bob
+db/db.sqlite
