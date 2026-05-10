@@ -66,7 +66,7 @@ for image_file in image_files:
     
     # Insert product into database
     cursor.execute("""
-        INSERT INTO products (name, timestamp, purchasePrice, description, imageUrl, note, active)
+        INSERT INTO products (name, timestamp, purchasePrice, description, image, note, active)
         VALUES (?, ?, ?, ?, ?, ?, ?)
     """, (
         product_name,

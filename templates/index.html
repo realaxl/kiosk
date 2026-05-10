@@ -66,8 +66,8 @@
                         {% endif %}
                     </div>
                     <div class="card-body p-0">
-                        {% if product['imageUrl'] %}
-                        <img src="{{ url_for('serve_image', filename=product['imageUrl']) }}"
+                        {% if product['image'] %}
+                        <img src="{{ url_for('serve_image', filename=product['image']) }}"
                              class="product-image"
                              alt="{{ product['name'] }}">
                         {% else %}
@@ -123,8 +123,13 @@
                         </div>
                         
                         <div class="mb-3">
-                            <label for="productImageUrl" class="form-label">Image URL</label>
-                            <input type="text" class="form-control" id="productImageUrl" name="imageUrl">
+                            <label for="productImage" class="form-label">Image</label>
+                            <input type="text" class="form-control" id="productImage" name="image">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="productUrl" class="form-label">URL</label>
+                            <input type="text" class="form-control" id="productUrl" name="url">
                         </div>
                         
                         <div class="mb-3">
@@ -179,7 +184,8 @@
                 document.getElementById('productName').value = product.name || '';
                 document.getElementById('productPrice').value = product.purchasePrice || '';
                 document.getElementById('productDescription').value = product.description || '';
-                document.getElementById('productImageUrl').value = product.imageUrl || '';
+                document.getElementById('productImage').value = product.image || '';
+                document.getElementById('productUrl').value = product.url || '';
                 document.getElementById('productManualUrl').value = product.manualUrl || '';
                 document.getElementById('productNote').value = product.note || '';
                 document.getElementById('productActive').checked = product.active === 1;
@@ -198,7 +204,8 @@
                 name: document.getElementById('productName').value,
                 purchasePrice: parseFloat(document.getElementById('productPrice').value),
                 description: document.getElementById('productDescription').value,
-                imageUrl: document.getElementById('productImageUrl').value,
+                image: document.getElementById('productImage').value,
+                url: document.getElementById('productUrl').value,
                 manualUrl: document.getElementById('productManualUrl').value,
                 note: document.getElementById('productNote').value,
                 active: document.getElementById('productActive').checked

@@ -1,21 +1,98 @@
-from flask import Flask, render_template, send_from_directory, jsonify, request
+# -*- coding: utf-8 -*-
+import sys
+import os
+
+# Set environment variable to ensure UTF-8 encoding on Windows
+if sys.platform == 'win32':
+    os.environ['PYTHONIOENCODING'] = 'utf-8'
+
+from flask import Flask, render_template, send_from_directory, jsonify, request, session, redirect, url_for
 import sqlite3
 from pathlib import Path
 from PIL import Image
 import os
 import time
+from dotenv import load_dotenv
+from functools import wraps
+
+# Load environment variables from .env file
+load_dotenv()
 
 app = Flask(__name__, template_folder='../templates')
+app.secret_key = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
 
 # Get the project root directory (parent of src directory)
 PROJECT_ROOT = Path(__file__).parent.parent
 
+# Configuration from .env
+DB_NAME = os.getenv('DB_NAME', 'db.sqlite')
+PORT = int(os.getenv('PORT', 5000))
+ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD')
+EVENT_NAME = os.getenv('EVENT')
+
 def get_db_connection():
     """Create a database connection"""
-    db_path = PROJECT_ROOT / 'db' / 'db.sqlite'
+    db_path = PROJECT_ROOT / 'db' / DB_NAME
     conn = sqlite3.connect(str(db_path))
     conn.row_factory = sqlite3.Row
     return conn
+
+def require_admin(f):
+    """Decorator to require admin authentication"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not session.get('admin_authenticated'):
+            return redirect(url_for('admin_login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+def init_app():
+    """Initialize application on startup"""
+    print("\n=== Application Initialization ===")
+    
+    # Check DB_NAME
+    if DB_NAME:
+        print(f"✓ Database name is set: {DB_NAME}")
+    else:
+        print("✗ Database name is not set")
+    
+    # Check ADMIN_PASSWORD
+    if ADMIN_PASSWORD:
+        print("✓ Admin password is set")
+    else:
+        print("✗ Admin password is not set")
+    
+    # Check if database file exists
+    db_path = PROJECT_ROOT / 'db' / DB_NAME
+    if not db_path.exists():
+        print(f"✗ ERROR: Database file not found at {db_path}")
+        print("Please run create_database.py first")
+        exit(1)
+    else:
+        print(f"✓ Database file exists at {db_path}")
+    
+    # Check/Create EVENT if specified
+    if EVENT_NAME:
+        conn = get_db_connection()
+        existing_event = conn.execute(
+            'SELECT * FROM events WHERE name = ?', (EVENT_NAME,)
+        ).fetchone()
+        
+        if existing_event:
+            print(f"✓ Event already exists: {EVENT_NAME}")
+        else:
+            # Create new event
+            timestamp = int(time.time())
+            conn.execute('''
+                INSERT INTO events (name, timestamp, description, note, active)
+                VALUES (?, ?, ?, ?, ?)
+            ''', (EVENT_NAME, timestamp, '', '', 1))
+            conn.commit()
+            print(f"✓ Created new event: {EVENT_NAME}")
+        
+        conn.close()
+    
+    print("=== Initialization Complete ===\n")
 
 def generate_thumbnail(image_path, cache_path, max_size=1024):
     """Generate a thumbnail with max dimensions of 1024x1024 while keeping proportions"""
@@ -150,7 +227,8 @@ def update_product(product_id):
                 timestamp = ?,
                 purchasePrice = ?,
                 description = ?,
-                imageUrl = ?,
+                image = ?,
+                url = ?,
                 manualUrl = ?,
                 note = ?,
                 active = ?
@@ -160,7 +238,8 @@ def update_product(product_id):
             timestamp,
             purchase_price,
             data.get('description'),
-            data.get('imageUrl'),
+            data.get('image'),
+            data.get('url'),
             data.get('manualUrl'),
             data.get('note'),
             1 if data.get('active') else 0,
@@ -173,7 +252,36 @@ def update_product(product_id):
         conn.close()
         return jsonify({'error': str(e)}), 500
 
+# Register admin blueprint
+from admin import admin_bp
+app.register_blueprint(admin_bp)
+
+@app.route('/admin/login', methods=['GET', 'POST'])
+def admin_login():
+    """Admin login page"""
+    if request.method == 'POST':
+        password = request.form.get('password')
+        if ADMIN_PASSWORD and password == ADMIN_PASSWORD:
+            session['admin_authenticated'] = True
+            return redirect(url_for('admin_dashboard'))
+        else:
+            return render_template('admin_login.html', error='Invalid password')
+    return render_template('admin_login.html')
+
+@app.route('/admin/logout')
+def admin_logout():
+    """Admin logout"""
+    session.pop('admin_authenticated', None)
+    return redirect(url_for('index'))
+
+@app.route('/admin')
+@require_admin
+def admin_dashboard():
+    """Admin dashboard page"""
+    return render_template('admin_dashboard.html')
+
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    init_app()
+    app.run(debug=True, host='0.0.0.0', port=PORT)
 
 # Made with Bob
