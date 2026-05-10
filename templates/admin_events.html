@@ -144,8 +144,8 @@
         <div class="toolbar">
             <button class="btn btn-primary" onclick="alert('Add Event - Coming soon')">+ Add Event</button>
             <div class="toggle">
-                <input type="checkbox" id="showAll" {% if show_all %}checked{% endif %} 
-                       onchange="window.location.href='?show_all=' + this.checked">
+                <input type="checkbox" id="showAll" {% if show_all %}checked{% endif %}
+                       onchange="toggleShowAll(this)">
                 <label for="showAll">Show All (including inactive)</label>
             </div>
         </div>
@@ -167,7 +167,7 @@
                     <tr>
                         <td>{{ event.eventId }}</td>
                         <td><strong>{{ event.name }}</strong></td>
-                        <td>{{ event.timestamp }}</td>
+                        <td data-timestamp="{{ event.timestamp }}">{{ event.timestamp }}</td>
                         <td>{{ event.description or '-' }}</td>
                         <td>
                             {% if event.active %}
@@ -185,5 +185,24 @@
             </table>
         </div>
     </div>
+    
+    <script>
+        function toggleShowAll(checkbox) {
+            window.location.href = '?show_all=' + checkbox.checked;
+        }
+        
+        // Format Unix timestamps to YYYY-MM-DD
+        document.addEventListener('DOMContentLoaded', function() {
+            const timestampCells = document.querySelectorAll('td[data-timestamp]');
+            timestampCells.forEach(cell => {
+                const timestamp = parseInt(cell.getAttribute('data-timestamp'));
+                const date = new Date(timestamp * 1000);
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                cell.textContent = `${year}-${month}-${day}`;
+            });
+        });
+    </script>
 </body>
 </html>

@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 import sys
-import io
+import os
 
-# Force UTF-8 encoding for stdout/stderr on Windows
+# Set environment variable to ensure UTF-8 encoding on Windows
 if sys.platform == 'win32':
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
+    os.environ['PYTHONIOENCODING'] = 'utf-8'
 
 from flask import Flask, render_template, send_from_directory, jsonify, request, session, redirect, url_for
 import sqlite3
