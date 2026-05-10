@@ -2,6 +2,8 @@ erDiagram
      stocks ||--o{ products : contains
      events ||--o{ stocks : has
      stocks ||--o{ sales : has
+     productCategories ||--o{ products : has
+     tags ||--o{ products : has
 
      events {
          int eventId PK
@@ -12,8 +14,18 @@ erDiagram
          int active
      }
 
+     productCategories {
+         int productCategoryId PK
+         string name
+         string description
+         string imageUrl
+         string note
+         int active
+     }
+
      products {
          int productId PK
+         int productCategoryId FK
          string name
          int timestamp
          float purchasePrice
@@ -28,7 +40,8 @@ erDiagram
          int stockId PK
          int eventId FK
          int productId FK
-         int numberInStock
+         int initialNumberInStock
+         int currentNumberInStock
          float salePrice
          string note
          int favorite

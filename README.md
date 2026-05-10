@@ -1,7 +1,6 @@
 # blinkyparts Kiosk - test with IBM BOB
 2026-05
 
-
 ## envs
 
 * dev
@@ -28,5 +27,19 @@ WARNING: This is a development server. Do not use it in a production deployment.
 
 ## KioskPi - running app on RasPi
 
+
+
 Raspberry Pi Auto-Update Setup
 /tmp/kiosk-auto-update.log
+
+
+## Support
+
+* [Mermaid online editor](https://www.mermaidflow.app/editor)
+
+
+## SQL Statements
+```sql
+INSERT INTO events (name, timestamp, description, note, active)
+VALUES ('Night of Science 2026', 1746835200, 'Night of Science 2026', 'Night of Science 2026', 1);
+```

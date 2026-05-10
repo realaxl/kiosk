@@ -23,9 +23,20 @@ SCHEMA = {
             "active": "INTEGER NOT NULL DEFAULT 1"
         }
     },
+    "productCategories": {
+        "columns": {
+            "productCategoryId": "INTEGER PRIMARY KEY",
+            "name": "TEXT NOT NULL",
+            "description": "TEXT",
+            "imageUrl": "TEXT",
+            "note": "TEXT",
+            "active": "INTEGER NOT NULL DEFAULT 1"
+        }
+    },
     "products": {
         "columns": {
             "productId": "INTEGER PRIMARY KEY",
+            "productCategoryId": "INTEGER",
             "name": "TEXT NOT NULL",
             "timestamp": "INTEGER NOT NULL",
             "purchasePrice": "REAL NOT NULL",
@@ -34,14 +45,18 @@ SCHEMA = {
             "manualUrl": "TEXT",
             "note": "TEXT",
             "active": "INTEGER NOT NULL DEFAULT 1"
-        }
+        },
+        "foreign_keys": [
+            "FOREIGN KEY (productCategoryId) REFERENCES productCategories(productCategoryId)"
+        ]
     },
     "stocks": {
         "columns": {
             "stockId": "INTEGER PRIMARY KEY",
             "eventId": "INTEGER NOT NULL",
             "productId": "INTEGER NOT NULL",
-            "numberInStock": "INTEGER NOT NULL",
+            "initialNumberInStock": "INTEGER NOT NULL",
+            "currentNumberInStock": "INTEGER NOT NULL",
             "salePrice": "REAL NOT NULL",
             "note": "TEXT",
             "favorite": "INTEGER",
@@ -169,7 +184,7 @@ def main():
             create_table(cursor, table_name, table_schema)
         
         print(f"\n[OK] Database created successfully")
-        print("Tables created: events, products, stocks, sales, tags")
+        print("Tables created: events, productCategories, products, stocks, sales, tags")
         print("Foreign key constraints enabled")
     
     # Commit changes and close connection
