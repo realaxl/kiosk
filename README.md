@@ -13,8 +13,20 @@
     * Raspberry Pi 400
     * KioskPi
 
+## running app on Windows 11
 
-## KioskPi
+```powershell
+PS C:\dev\kiosk-with-bob> uv run .\src\app.py
+ * Serving Flask app 'app'
+ * Debug mode: on
+WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://172.16.0.106:5000
+```
+
+
+## KioskPi - running app on RasPi
 
 Raspberry Pi Auto-Update Setup
 /tmp/kiosk-auto-update.log
