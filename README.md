@@ -35,10 +35,12 @@ Raspberry Pi Auto-Update Setup
 
 ## Support
 
+### Tools
+* git (local): http://172.16.0.16:5000/ibm/kiosk-with-bob
 * [Mermaid online editor](https://www.mermaidflow.app/editor)
 
 
-## SQL Statements
+### SQL Statements
 ```sql
 INSERT INTO events (name, timestamp, description, note, active)
 VALUES ('Night of Science 2026', 1746835200, 'Night of Science 2026', 'Night of Science 2026', 1);
