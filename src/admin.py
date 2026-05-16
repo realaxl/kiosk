@@ -343,25 +343,37 @@ def delete_product(product_id):
 @require_admin
 def stocks():
     """Stock management page"""
+    import os
     conn = get_db_connection()
     
     # Get all events
-    events = conn.execute('SELECT * FROM events WHERE active = 1 ORDER BY timestamp DESC').fetchall()
+    events = conn.execute('SELECT * FROM events ORDER BY timestamp DESC').fetchall()
     
     # Get all product categories
-    categories = conn.execute('SELECT * FROM productCategories WHERE active = 1 ORDER BY name').fetchall()
+    categories = conn.execute('SELECT * FROM productCategories ORDER BY name').fetchall()
     
-    # Get all active products with their stocks
+    # Get all products with their category info
     products = conn.execute('''
         SELECT p.*, pc.name as categoryName
         FROM products p
         LEFT JOIN productCategories pc ON p.productCategoryId = pc.productCategoryId
-        WHERE p.active = 1
         ORDER BY p.name
     ''').fetchall()
     
+    # Get default event from .env
+    default_event_name = os.getenv('EVENT', '')
+    default_event_id = None
+    if default_event_name:
+        default_event = conn.execute('SELECT eventId FROM events WHERE name = ?', (default_event_name,)).fetchone()
+        if default_event:
+            default_event_id = default_event['eventId']
+    
     conn.close()
-    return render_template('admin_stocks.html', events=events, categories=categories, products=products)
+    return render_template('admin_stocks.html',
+                         events=events,
+                         categories=categories,
+                         products=products,
+                         default_event_id=default_event_id)
 
 @admin_bp.route('/api/stocks', methods=['GET'])
 @require_admin
