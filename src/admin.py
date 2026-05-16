@@ -231,27 +231,18 @@ def delete_product_category(category_id):
 def products():
     """Products management page"""
     conn = get_db_connection()
-    show_all = request.args.get('show_all', 'false') == 'true'
     
-    if show_all:
-        products = conn.execute('''
-            SELECT p.*, pc.name as categoryName
-            FROM products p
-            LEFT JOIN productCategories pc ON p.productCategoryId = pc.productCategoryId
-            ORDER BY p.name
-        ''').fetchall()
-    else:
-        products = conn.execute('''
-            SELECT p.*, pc.name as categoryName
-            FROM products p
-            LEFT JOIN productCategories pc ON p.productCategoryId = pc.productCategoryId
-            WHERE p.active = 1
-            ORDER BY p.name
-        ''').fetchall()
+    # Always fetch all products, let frontend handle filtering
+    products = conn.execute('''
+        SELECT p.*, pc.name as categoryName
+        FROM products p
+        LEFT JOIN productCategories pc ON p.productCategoryId = pc.productCategoryId
+        ORDER BY p.name
+    ''').fetchall()
     
     categories = conn.execute('SELECT * FROM productCategories WHERE active = 1 ORDER BY name').fetchall()
     conn.close()
-    return render_template('admin_products.html', products=products, categories=categories, show_all=show_all)
+    return render_template('admin_products.html', products=products, categories=categories)
 
 @admin_bp.route('/api/products/<int:product_id>', methods=['GET'])
 @require_admin

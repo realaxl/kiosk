@@ -400,6 +400,10 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 20px;
+        
+        /* Hide inactive products by default - use !important to override inline styles */
+        .product-item[data-active="0"]:not(.show-inactive) {
+            display: none !important;
         }
     </style>
 </head>
@@ -429,14 +433,10 @@
             </div>
             
             <div class="filter-group">
-                <label>Status</label>
-                <div class="toggle-container">
-                    <span>Nur aktive</span>
-                    <label class="toggle">
-                        <input type="checkbox" id="activeFilter" {% if not show_all %}checked{% endif %} onchange="filterProducts()">
-                        <span class="toggle-slider"></span>
-                    </label>
-                </div>
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="checkbox" id="showAllFilter" onchange="filterProducts()" style="cursor: pointer;">
+                    <span>Alle anzeigen (auch inaktive)</span>
+                </label>
             </div>
         </div>
         
@@ -476,6 +476,16 @@
                     <p>Erstellen Sie Ihr erstes Produkt, um loszulegen.</p>
                 </div>
             {% endif %}
+        
+        <!-- Immediately hide inactive products on page load -->
+        <script>
+            (function() {
+                const items = document.querySelectorAll('.product-item[data-active="0"]');
+                items.forEach(item => {
+                    item.style.display = 'none';
+                });
+            })();
+        </script>
         </div>
     </div>
     
@@ -587,7 +597,7 @@
         
         function filterProducts() {
             const categoryFilter = document.getElementById('categoryFilter').value;
-            const activeFilter = document.getElementById('activeFilter').checked;
+            const showAll = document.getElementById('showAllFilter').checked;
             const items = document.querySelectorAll('.product-item');
             
             items.forEach(item => {
@@ -595,7 +605,14 @@
                 const active = item.dataset.active === '1';
                 
                 let showCategory = !categoryFilter || category === categoryFilter;
-                let showActive = !activeFilter || active;
+                let showActive = showAll || active;
+                
+                // Add/remove class to control inactive product visibility
+                if (showAll) {
+                    item.classList.add('show-inactive');
+                } else {
+                    item.classList.remove('show-inactive');
+                }
                 
                 if (showCategory && showActive) {
                     item.style.display = 'flex';
@@ -679,7 +696,6 @@
                 
                 if (!response.ok) throw new Error('Produkt konnte nicht gespeichert werden');
                 
-                alert('Produkt erfolgreich gespeichert!');
                 closeModal();
                 location.reload();
             } catch (error) {
@@ -737,6 +753,11 @@
             if (event.target === imageModal) {
                 closeImagePreview();
             }
+        
+        // Apply filters on page load to hide inactive products by default
+        document.addEventListener('DOMContentLoaded', function() {
+            filterProducts();
+        });
         }
     </script>
 </body>
