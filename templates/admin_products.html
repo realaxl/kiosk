@@ -71,6 +71,11 @@
             color: white;
         }
         
+        .btn-warning {
+            background: #ecc94b;
+            color: #2d3748;
+        }
+        
         .btn-sm {
             padding: 5px 10px;
             font-size: 12px;
@@ -465,7 +470,11 @@
                     </div>
                     <div class="product-actions">
                         <button class="btn btn-primary btn-sm" onclick="openEditModal({{ product['productId'] }})">Bearbeiten</button>
-                        <button class="btn btn-danger btn-sm" onclick="deleteProduct({{ product['productId'] }})">Löschen</button>
+                        {% if product['active'] %}
+                        <button class="btn btn-warning btn-sm" onclick="toggleProductStatus({{ product['productId'] }}, false)">Deaktivieren</button>
+                        {% else %}
+                        <button class="btn btn-success btn-sm" onclick="toggleProductStatus({{ product['productId'] }}, true)">Aktivieren</button>
+                        {% endif %}
                     </div>
                 </div>
                 {% endfor %}
@@ -703,20 +712,28 @@
             }
         }
         
-        async function deleteProduct(productId) {
-            if (!confirm('Möchten Sie dieses Produkt wirklich löschen?')) return;
-            
+        async function toggleProductStatus(productId, newStatus) {
             try {
-                const response = await fetch(`/admin/api/products/${productId}`, {
-                    method: 'DELETE'
+                // First, get the current product data
+                const getResponse = await fetch(`/admin/api/products/${productId}`);
+                if (!getResponse.ok) throw new Error('Produkt konnte nicht geladen werden');
+                
+                const product = await getResponse.json();
+                
+                // Update only the active status
+                product.active = newStatus;
+                
+                const updateResponse = await fetch(`/admin/api/products/${productId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(product)
                 });
                 
-                if (!response.ok) throw new Error('Produkt konnte nicht gelöscht werden');
+                if (!updateResponse.ok) throw new Error('Status konnte nicht geändert werden');
                 
-                alert('Produkt erfolgreich gelöscht!');
                 location.reload();
             } catch (error) {
-                alert('Fehler beim Löschen: ' + error.message);
+                alert('Fehler beim Ändern des Status: ' + error.message);
             }
         }
         
