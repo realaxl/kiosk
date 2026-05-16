@@ -253,6 +253,52 @@ def products():
     conn.close()
     return render_template('admin_products.html', products=products, categories=categories, show_all=show_all)
 
+@admin_bp.route('/api/products/<int:product_id>', methods=['GET'])
+@require_admin
+def get_product(product_id):
+    """Get a single product by ID"""
+    conn = get_db_connection()
+    product = conn.execute('SELECT * FROM products WHERE productId = ?', (product_id,)).fetchone()
+    conn.close()
+    
+    if product is None:
+        return jsonify({'error': 'Product not found'}), 404
+    
+    return jsonify(dict(product))
+
+@admin_bp.route('/api/products/<int:product_id>', methods=['PUT'])
+@require_admin
+def update_product(product_id):
+    """Update a product"""
+    data = request.get_json()
+    conn = get_db_connection()
+    
+    try:
+        conn.execute('''
+            UPDATE products
+            SET productCategoryId = ?, name = ?, timestamp = ?, purchasePrice = ?,
+                description = ?, image = ?, url = ?, manualUrl = ?, note = ?, active = ?
+            WHERE productId = ?
+        ''', (
+            data.get('productCategoryId'),
+            data.get('name'),
+            data.get('timestamp', int(time.time())),
+            data.get('purchasePrice', 0),
+            data.get('description'),
+            data.get('image'),
+            data.get('url'),
+            data.get('manualUrl'),
+            data.get('note'),
+            1 if data.get('active') else 0,
+            product_id
+        ))
+        conn.commit()
+        conn.close()
+        return jsonify({'success': True})
+    except Exception as e:
+        conn.close()
+        return jsonify({'error': str(e)}), 500
+
 @admin_bp.route('/api/products', methods=['POST'])
 @require_admin
 def create_product():

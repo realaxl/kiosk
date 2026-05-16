@@ -1,20 +1,743 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Products Management</title>
+    <title>Produktverwaltung - Admin</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f5f5;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.2s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background: rgba(160, 160, 160, 0.7);
+            color: white;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-success {
+            background: #48bb78;
+            color: white;
+        }
+        
+        .btn-danger {
+            background: #f56565;
+            color: white;
+        }
+        
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 20px auto;
+            padding: 0 20px;
+        }
+        
+        .filters {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .filter-group label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #666;
+            text-transform: uppercase;
+        }
+        
+        .filter-group select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            min-width: 200px;
+        }
+        
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .toggle {
+            position: relative;
+            width: 50px;
+            height: 26px;
+        }
+        
+        .toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: 0.4s;
+            border-radius: 26px;
+        }
+        
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: 0.4s;
+            border-radius: 50%;
+        }
+        
+        .toggle input:checked + .toggle-slider {
+            background-color: #48bb78;
+        }
+        
+        .toggle input:checked + .toggle-slider:before {
+            transform: translateX(24px);
+        }
+        
+        .products-list {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        .product-item {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            border-bottom: 1px solid #eee;
+            transition: background 0.2s;
+        }
+        
+        .product-item:hover {
+            background: #f9f9f9;
+        }
+        
+        .product-item:last-child {
+            border-bottom: none;
+        }
+        
+        .product-thumbnail {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-right: 20px;
+            background: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+            font-size: 12px;
+        }
+        
+        .product-thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+        
+        .product-info {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .product-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .product-description {
+            font-size: 14px;
+            color: #666;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .product-meta {
+            display: flex;
+            gap: 15px;
+            margin-top: 5px;
+            font-size: 12px;
+            color: #999;
+        }
+        
+        .product-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            overflow-y: auto;
+        }
+        
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 20px;
+            padding: 0;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 5px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            background: white;
+            z-index: 1;
+        }
+        
+        .modal-header h2 {
+            font-size: 20px;
+            color: #333;
+        }
+        
+        .close {
+            font-size: 28px;
+            font-weight: bold;
+            color: #aaa;
+            cursor: pointer;
+            line-height: 1;
+        }
+        
+        .close:hover {
+            color: #000;
+        }
+        
+        .modal-body {
+            padding: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+        
+        .form-group input[type="text"],
+        .form-group input[type="number"],
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+        
+        .form-group textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+        
+        .form-group input[type="text"]:focus,
+        .form-group input[type="number"]:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .input-with-button {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .input-with-button input {
+            flex: 1;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .modal-footer {
+            padding: 20px;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            position: sticky;
+            bottom: 0;
+            background: white;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+        
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+        
+        .image-preview-modal .modal-content {
+            max-width: 90%;
+            width: auto;
+        }
+        
+        .image-preview-modal img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        
+        .readonly-field {
+            background-color: #f5f5f5;
+            color: #666;
+        }
+        
+        .actions-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+    </style>
 </head>
 <body>
     <div class="header">
         <div class="header-content">
-            <h1>📦 Products Management</h1>
-            <a href="/admin" class="btn btn-secondary">← Back to Dashboard</a>
+            <h1>📦 Produktverwaltung</h1>
+            <a href="/admin" class="btn btn-secondary">← Zurück zum Dashboard</a>
         </div>
     </div>
+    
     <div class="container">
-        <h2>Products - Coming Soon</h2>
-        <p>This page will allow you to manage products.</p>
+        <div class="actions-bar">
+            <h2>Produkte</h2>
+            <button class="btn btn-success" onclick="openCreateModal()">+ Neues Produkt</button>
+        </div>
+        
+        <div class="filters">
+            <div class="filter-group">
+                <label>Kategorie</label>
+                <select id="categoryFilter" onchange="filterProducts()">
+                    <option value="">Alle Kategorien</option>
+                    {% for category in categories %}
+                    <option value="{{ category['productCategoryId'] }}">{{ category['name'] }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label>Status</label>
+                <div class="toggle-container">
+                    <span>Nur aktive</span>
+                    <label class="toggle">
+                        <input type="checkbox" id="activeFilter" {% if not show_all %}checked{% endif %} onchange="filterProducts()">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+        
+        <div class="products-list" id="productsList">
+            {% if products %}
+                {% for product in products %}
+                <div class="product-item" data-category="{{ product['productCategoryId'] or '' }}" data-active="{{ product['active'] }}">
+                    <div class="product-thumbnail">
+                        {% if product['image'] %}
+                        <img src="/images/{{ product['image'] }}" alt="{{ product['name'] }}">
+                        {% else %}
+                        Kein Bild
+                        {% endif %}
+                    </div>
+                    <div class="product-info">
+                        <div class="product-name">{{ product['name'] }}</div>
+                        <div class="product-description">{{ product['description'] or 'Keine Beschreibung' }}</div>
+                        <div class="product-meta">
+                            <span>ID: {{ product['productId'] }}</span>
+                            {% if product['categoryName'] %}
+                            <span>Kategorie: {{ product['categoryName'] }}</span>
+                            {% endif %}
+                            <span>Preis: {{ "%.2f"|format(product['purchasePrice']) }} €</span>
+                            <span>{% if product['active'] %}✓ Aktiv{% else %}✗ Inaktiv{% endif %}</span>
+                        </div>
+                    </div>
+                    <div class="product-actions">
+                        <button class="btn btn-primary btn-sm" onclick="openEditModal({{ product['productId'] }})">Bearbeiten</button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteProduct({{ product['productId'] }})">Löschen</button>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-state-icon">📦</div>
+                    <h3>Keine Produkte gefunden</h3>
+                    <p>Erstellen Sie Ihr erstes Produkt, um loszulegen.</p>
+                </div>
+            {% endif %}
+        </div>
     </div>
+    
+    <!-- Edit/Create Product Modal -->
+    <div id="productModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Produkt bearbeiten</h2>
+                <span class="close" onclick="closeModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="productForm">
+                    <input type="hidden" id="productId">
+                    
+                    <div class="form-group">
+                        <label>ID</label>
+                        <input type="text" id="productIdDisplay" class="readonly-field" readonly>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Name *</label>
+                            <input type="text" id="productName" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Kategorie</label>
+                            <select id="productCategory">
+                                <option value="">Keine Kategorie</option>
+                                {% for category in categories %}
+                                <option value="{{ category['productCategoryId'] }}">{{ category['name'] }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Einkaufspreis (€) *</label>
+                        <input type="number" id="productPrice" step="0.01" min="0" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Beschreibung</label>
+                        <textarea id="productDescription" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Bild</label>
+                        <div class="input-with-button">
+                            <input type="text" id="productImage" placeholder="Bildpfad">
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="previewImage()">Vorschau</button>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>URL</label>
+                        <div class="input-with-button">
+                            <input type="text" id="productUrl" placeholder="https://...">
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="openUrl('productUrl')">Öffnen</button>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Anleitung URL</label>
+                        <div class="input-with-button">
+                            <input type="text" id="productManualUrl" placeholder="https://...">
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="openUrl('productManualUrl')">Öffnen</button>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Notiz</label>
+                        <textarea id="productNote" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="toggle-container">
+                            <span>Aktiv</span>
+                            <label class="toggle">
+                                <input type="checkbox" id="productActive">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal()">Abbrechen</button>
+                <button class="btn btn-success" onclick="saveProduct()">Speichern</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Image Preview Modal -->
+    <div id="imagePreviewModal" class="modal image-preview-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Bildvorschau</h2>
+                <span class="close" onclick="closeImagePreview()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <img id="previewImage" src="" alt="Vorschau">
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let isEditMode = false;
+        
+        function filterProducts() {
+            const categoryFilter = document.getElementById('categoryFilter').value;
+            const activeFilter = document.getElementById('activeFilter').checked;
+            const items = document.querySelectorAll('.product-item');
+            
+            items.forEach(item => {
+                const category = item.dataset.category;
+                const active = item.dataset.active === '1';
+                
+                let showCategory = !categoryFilter || category === categoryFilter;
+                let showActive = !activeFilter || active;
+                
+                if (showCategory && showActive) {
+                    item.style.display = 'flex';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        }
+        
+        function openCreateModal() {
+            isEditMode = false;
+            document.getElementById('modalTitle').textContent = 'Neues Produkt erstellen';
+            document.getElementById('productForm').reset();
+            document.getElementById('productId').value = '';
+            document.getElementById('productIdDisplay').value = 'Wird automatisch vergeben';
+            document.getElementById('productActive').checked = true;
+            document.getElementById('productModal').classList.add('active');
+        }
+        
+        async function openEditModal(productId) {
+            isEditMode = true;
+            document.getElementById('modalTitle').textContent = 'Produkt bearbeiten';
+            
+            try {
+                const response = await fetch(`/admin/api/products/${productId}`);
+                if (!response.ok) throw new Error('Produkt konnte nicht geladen werden');
+                
+                const product = await response.json();
+                
+                document.getElementById('productId').value = product.productId;
+                document.getElementById('productIdDisplay').value = product.productId;
+                document.getElementById('productName').value = product.name || '';
+                document.getElementById('productCategory').value = product.productCategoryId || '';
+                document.getElementById('productPrice').value = product.purchasePrice || 0;
+                document.getElementById('productDescription').value = product.description || '';
+                document.getElementById('productImage').value = product.image || '';
+                document.getElementById('productUrl').value = product.url || '';
+                document.getElementById('productManualUrl').value = product.manualUrl || '';
+                document.getElementById('productNote').value = product.note || '';
+                document.getElementById('productActive').checked = product.active === 1;
+                
+                document.getElementById('productModal').classList.add('active');
+            } catch (error) {
+                alert('Fehler beim Laden des Produkts: ' + error.message);
+            }
+        }
+        
+        function closeModal() {
+            document.getElementById('productModal').classList.remove('active');
+        }
+        
+        async function saveProduct() {
+            const productId = document.getElementById('productId').value;
+            const data = {
+                productCategoryId: document.getElementById('productCategory').value || null,
+                name: document.getElementById('productName').value,
+                purchasePrice: parseFloat(document.getElementById('productPrice').value),
+                description: document.getElementById('productDescription').value,
+                image: document.getElementById('productImage').value,
+                url: document.getElementById('productUrl').value,
+                manualUrl: document.getElementById('productManualUrl').value,
+                note: document.getElementById('productNote').value,
+                active: document.getElementById('productActive').checked
+            };
+            
+            try {
+                let response;
+                if (isEditMode && productId) {
+                    response = await fetch(`/admin/api/products/${productId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                } else {
+                    response = await fetch('/admin/api/products', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                }
+                
+                if (!response.ok) throw new Error('Produkt konnte nicht gespeichert werden');
+                
+                alert('Produkt erfolgreich gespeichert!');
+                closeModal();
+                location.reload();
+            } catch (error) {
+                alert('Fehler beim Speichern: ' + error.message);
+            }
+        }
+        
+        async function deleteProduct(productId) {
+            if (!confirm('Möchten Sie dieses Produkt wirklich löschen?')) return;
+            
+            try {
+                const response = await fetch(`/admin/api/products/${productId}`, {
+                    method: 'DELETE'
+                });
+                
+                if (!response.ok) throw new Error('Produkt konnte nicht gelöscht werden');
+                
+                alert('Produkt erfolgreich gelöscht!');
+                location.reload();
+            } catch (error) {
+                alert('Fehler beim Löschen: ' + error.message);
+            }
+        }
+        
+        function openUrl(fieldId) {
+            const url = document.getElementById(fieldId).value;
+            if (url) {
+                window.open(url, '_blank');
+            } else {
+                alert('Bitte geben Sie zuerst eine URL ein.');
+            }
+        }
+        
+        function previewImage() {
+            const imagePath = document.getElementById('productImage').value;
+            if (imagePath) {
+                document.getElementById('previewImage').src = `/images/${imagePath}`;
+                document.getElementById('imagePreviewModal').classList.add('active');
+            } else {
+                alert('Bitte geben Sie zuerst einen Bildpfad ein.');
+            }
+        }
+        
+        function closeImagePreview() {
+            document.getElementById('imagePreviewModal').classList.remove('active');
+        }
+        
+        // Close modals when clicking outside
+        window.onclick = function(event) {
+            const productModal = document.getElementById('productModal');
+            const imageModal = document.getElementById('imagePreviewModal');
+            if (event.target === productModal) {
+                closeModal();
+            }
+            if (event.target === imageModal) {
+                closeImagePreview();
+            }
+        }
+    </script>
 </body>
 </html>
