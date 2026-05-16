@@ -36,7 +36,8 @@ Raspberry Pi Auto-Update Setup
 ## Support
 
 ### Tools
-* git (local): http://172.16.0.16:5000/ibm/kiosk-with-bob
+* git (local repo): http://172.16.0.16:5000/ibm/kiosk-with-bob
+* git reset --hard origin/main: how-do-i-force-git-pull-to-overwrite-local-files
 * [Mermaid online editor](https://www.mermaidflow.app/editor)
 
 

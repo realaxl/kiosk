@@ -122,8 +122,33 @@ def index():
     """Main page showing all products"""
     conn = get_db_connection()
     
-    # Get all active products
-    products = conn.execute('SELECT * FROM products WHERE active = 1').fetchall()
+    # Get current event (active event or the one specified in .env)
+    current_event = None
+    if EVENT_NAME:
+        current_event = conn.execute(
+            'SELECT * FROM events WHERE name = ? AND active = 1', (EVENT_NAME,)
+        ).fetchone()
+    
+    if not current_event:
+        # Get any active event
+        current_event = conn.execute(
+            'SELECT * FROM events WHERE active = 1 ORDER BY timestamp DESC LIMIT 1'
+        ).fetchone()
+    
+    # Get products that have stock for the current event
+    if current_event:
+        products = conn.execute('''
+            SELECT DISTINCT p.*
+            FROM products p
+            INNER JOIN stocks s ON p.productId = s.productId
+            WHERE p.active = 1
+            AND s.eventId = ?
+            AND s.active = 1
+            AND s.currentNumberInStock > 0
+        ''', (current_event['eventId'],)).fetchall()
+    else:
+        # No event found, show all active products
+        products = conn.execute('SELECT * FROM products WHERE active = 1').fetchall()
     
     # Get tags for each product
     products_with_tags = []
@@ -145,7 +170,10 @@ def index():
         print(f"[DEBUG]   tags: {product_dict['tags']}")
     
     conn.close()
-    return render_template('index.html', products=products_with_tags)
+    
+    # Pass event name to template
+    event_name = dict(current_event)['name'] if current_event else None
+    return render_template('index.html', products=products_with_tags, event_name=event_name)
 
 @app.route('/images/<path:filename>')
 def serve_image(filename):
