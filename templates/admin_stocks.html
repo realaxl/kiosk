@@ -581,21 +581,21 @@
                         <input type="text" id="stockProductName" class="readonly-field" readonly>
                     </div>
                     
+                    <div class="form-group">
+                        <label>Verkaufspreis (€) * <span id="stockPurchasePriceInfo" style="font-weight: normal; color: #666; font-size: 12px;"></span></label>
+                        <input type="number" id="stockSalePrice" step="0.01" min="0" required>
+                    </div>
+                    
                     <div class="form-row">
                         <div class="form-group">
-                            <label>Verkaufspreis (€) *</label>
-                            <input type="number" id="stockSalePrice" step="0.01" min="0" required>
+                            <label>Anfangsbestand *</label>
+                            <input type="number" id="stockInitialNumber" min="0" required oninput="updateCurrentStock()">
                         </div>
                         
                         <div class="form-group">
-                            <label>Anfangsbestand *</label>
-                            <input type="number" id="stockInitialNumber" min="0" required>
+                            <label>Aktueller Bestand *</label>
+                            <input type="number" id="stockCurrentNumber" min="0" required>
                         </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Aktueller Bestand *</label>
-                        <input type="number" id="stockCurrentNumber" min="0" required>
                     </div>
                     
                     <div class="form-group">
@@ -770,6 +770,17 @@
             filterStocks();
         }
         
+        // Update current stock when initial stock changes
+        function updateCurrentStock() {
+            const initialStock = document.getElementById('stockInitialNumber').value;
+            const stockId = document.getElementById('stockId').value;
+            
+            // Only auto-update if this is a new stock entry (no stockId)
+            if (!stockId && initialStock) {
+                document.getElementById('stockCurrentNumber').value = initialStock;
+            }
+        }
+        
         // Add product to stock
         async function addToStock(productId) {
             if (!currentEventId) {
@@ -784,23 +795,28 @@
                 return;
             }
             
-            // Get product details
-            const productElement = document.querySelector(`.product-item[data-product-id="${productId}"]`);
-            const productName = productElement.dataset.productName;
-            
-            // Open modal for new stock entry
-            document.getElementById('modalTitle').textContent = 'Produkt zum Bestand hinzufügen';
-            document.getElementById('stockId').value = '';
-            document.getElementById('stockEventId').value = currentEventId;
-            document.getElementById('stockProductId').value = productId;
-            document.getElementById('stockProductName').value = productName;
-            document.getElementById('stockSalePrice').value = '0.00';
-            document.getElementById('stockInitialNumber').value = '0';
-            document.getElementById('stockCurrentNumber').value = '0';
-            document.getElementById('stockNote').value = '';
-            document.getElementById('stockActive').checked = true;
-            
-            document.getElementById('stockModal').classList.add('active');
+            try {
+                // Fetch product details to get purchase price
+                const response = await fetch(`/admin/api/products/${productId}`);
+                const product = await response.json();
+                
+                // Open modal for new stock entry
+                document.getElementById('modalTitle').textContent = 'Produkt zum Bestand hinzufügen';
+                document.getElementById('stockId').value = '';
+                document.getElementById('stockEventId').value = currentEventId;
+                document.getElementById('stockProductId').value = productId;
+                document.getElementById('stockProductName').value = product.name;
+                document.getElementById('stockPurchasePriceInfo').textContent = `(EK: ${product.purchasePrice.toFixed(2)} €)`;
+                document.getElementById('stockSalePrice').value = '0.00';
+                document.getElementById('stockInitialNumber').value = '0';
+                document.getElementById('stockCurrentNumber').value = '0';
+                document.getElementById('stockNote').value = '';
+                document.getElementById('stockActive').checked = true;
+                
+                document.getElementById('stockModal').classList.add('active');
+            } catch (error) {
+                alert('Fehler beim Laden der Produktdaten: ' + error.message);
+            }
         }
         
         // Edit stock entry
@@ -817,6 +833,7 @@
                 document.getElementById('stockEventId').value = stock.eventId;
                 document.getElementById('stockProductId').value = stock.productId;
                 document.getElementById('stockProductName').value = product.name;
+                document.getElementById('stockPurchasePriceInfo').textContent = `(EK: ${product.purchasePrice.toFixed(2)} €)`;
                 document.getElementById('stockSalePrice').value = stock.salePrice;
                 document.getElementById('stockInitialNumber').value = stock.initialNumberInStock;
                 document.getElementById('stockCurrentNumber').value = stock.currentNumberInStock;

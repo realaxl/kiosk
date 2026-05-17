@@ -407,6 +407,9 @@ def create_stock():
     conn = get_db_connection()
     
     try:
+        # Log the incoming data for debugging
+        print(f"Creating stock with data: {data}")
+        
         cursor = conn.execute('''
             INSERT INTO stocks (eventId, productId, initialNumberInStock, currentNumberInStock, salePrice, note, favorite, active)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -417,7 +420,7 @@ def create_stock():
             data.get('currentNumberInStock', 0),
             data.get('salePrice', 0),
             data.get('note', ''),
-            1 if data.get('favorite', False) else 0,
+            0,  # favorite defaults to 0
             1 if data.get('active', True) else 0
         ))
         conn.commit()
@@ -426,6 +429,9 @@ def create_stock():
         return jsonify({'success': True, 'stockId': stock_id})
     except Exception as e:
         conn.close()
+        print(f"Error creating stock: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
 @admin_bp.route('/api/stocks/<int:stock_id>', methods=['PUT'])
@@ -436,6 +442,8 @@ def update_stock(stock_id):
     conn = get_db_connection()
     
     try:
+        print(f"Updating stock {stock_id} with data: {data}")
+        
         conn.execute('''
             UPDATE stocks
             SET initialNumberInStock = ?, currentNumberInStock = ?, salePrice = ?, note = ?, favorite = ?, active = ?
@@ -445,7 +453,7 @@ def update_stock(stock_id):
             data.get('currentNumberInStock'),
             data.get('salePrice'),
             data.get('note'),
-            1 if data.get('favorite') else 0,
+            1 if data.get('favorite', False) else 0,
             1 if data.get('active') else 0,
             stock_id
         ))
@@ -454,6 +462,9 @@ def update_stock(stock_id):
         return jsonify({'success': True})
     except Exception as e:
         conn.close()
+        print(f"Error updating stock: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
 @admin_bp.route('/api/stocks/<int:stock_id>', methods=['DELETE'])
