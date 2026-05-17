@@ -41,9 +41,9 @@ env/
 .DS_Store
 Thumbs.db
 
-# Project specific
-images/
-db/
-
 # Made with Bob
+# Project specific
+# images/
+db/
 db/db.sqlite
+
