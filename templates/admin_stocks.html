@@ -524,6 +524,7 @@
                         </div>
                     </div>
                     <div class="item-actions">
+                        <button class="btn btn-warning btn-sm" onclick="editProduct({{ product['productId'] }})">Bearbeiten</button>
                         <button class="btn btn-success btn-sm" onclick="addToStock({{ product['productId'] }})">+ Hinzufügen</button>
                     </div>
                 </div>
@@ -624,6 +625,11 @@
     <script>
         let currentEventId = null;
         let stocksData = [];
+        
+        // Edit product - redirect to products page
+        function editProduct(productId) {
+            window.location.href = `/admin/products?edit=${productId}`;
+        }
         
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', function() {

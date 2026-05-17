@@ -770,12 +770,21 @@
             if (event.target === imageModal) {
                 closeImagePreview();
             }
+        };
         
         // Apply filters on page load to hide inactive products by default
         document.addEventListener('DOMContentLoaded', function() {
             filterProducts();
+            
+            // Check if we should open edit modal from URL parameter
+            const urlParams = new URLSearchParams(window.location.search);
+            const editProductId = urlParams.get('edit');
+            if (editProductId) {
+                openEditModal(parseInt(editProductId));
+                // Clean up URL without reloading
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
         });
-        }
     </script>
 </body>
 </html>
