@@ -60,6 +60,19 @@ def get_events():
     conn.close()
     return jsonify([dict(event) for event in events])
 
+@admin_bp.route('/api/events/<int:event_id>', methods=['GET'])
+@require_admin
+def get_event(event_id):
+    """Get a single event by ID"""
+    conn = get_db_connection()
+    event = conn.execute('SELECT * FROM events WHERE eventId = ?', (event_id,)).fetchone()
+    conn.close()
+    
+    if event is None:
+        return jsonify({'error': 'Event not found'}), 404
+    
+    return jsonify(dict(event))
+
 @admin_bp.route('/api/events', methods=['POST'])
 @require_admin
 def create_event():

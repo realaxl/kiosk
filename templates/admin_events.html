@@ -1,9 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Events Management</title>
+    <title>Event-Verwaltung - Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <style>
         * {
             margin: 0;
@@ -128,25 +130,142 @@
             width: 20px;
             height: 20px;
         }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            overflow-y: auto;
+        }
+        
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 20px;
+            padding: 0;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 5px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            background: white;
+            z-index: 1;
+        }
+        
+        .modal-header h2 {
+            font-size: 20px;
+            color: #333;
+            margin: 0;
+        }
+        
+        .close {
+            font-size: 28px;
+            font-weight: bold;
+            color: #aaa;
+            cursor: pointer;
+            line-height: 1;
+            border: none;
+            background: none;
+        }
+        
+        .close:hover {
+            color: #000;
+        }
+        
+        .modal-body {
+            padding: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+        
+        .form-group input[type="text"],
+        .form-group input[type="number"],
+        .form-group input[type="date"],
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+        
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .readonly-field {
+            background-color: #f5f5f5;
+            color: #666;
+        }
+        
+        .modal-footer {
+            padding: 20px;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            position: sticky;
+            bottom: 0;
+            background: white;
+        }
     </style>
 </head>
 <body>
     <div class="header">
         <div class="header-content">
-            <h1>📅 Events Management</h1>
+            <h1>📅 Event-Verwaltung</h1>
             <div>
-                <a href="/admin" class="btn btn-secondary">← Back to Dashboard</a>
+                <a href="/admin" class="btn btn-secondary">← Zurück zum Dashboard</a>
             </div>
         </div>
     </div>
     
     <div class="container">
         <div class="toolbar">
-            <button class="btn btn-primary" onclick="alert('Add Event - Coming soon')">+ Add Event</button>
+            <button class="btn btn-primary" onclick="alert('Event hinzufügen - Demnächst verfügbar')">+ Event hinzufügen</button>
             <div class="toggle">
                 <input type="checkbox" id="showAll" {% if show_all %}checked{% endif %}
                        onchange="toggleShowAll(this)">
-                <label for="showAll">Show All (including inactive)</label>
+                <label for="showAll">Alle anzeigen (auch inaktive)</label>
             </div>
         </div>
         
@@ -156,10 +275,10 @@
                     <tr>
                         <th>ID</th>
                         <th>Name</th>
-                        <th>Date</th>
-                        <th>Description</th>
+                        <th>Datum</th>
+                        <th>Beschreibung</th>
                         <th>Status</th>
-                        <th>Actions</th>
+                        <th>Aktionen</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -171,13 +290,13 @@
                         <td>{{ event.description or '-' }}</td>
                         <td>
                             {% if event.active %}
-                            <span class="badge badge-active">Active</span>
+                            <span class="badge badge-active">Aktiv</span>
                             {% else %}
-                            <span class="badge badge-inactive">Inactive</span>
+                            <span class="badge badge-inactive">Inaktiv</span>
                             {% endif %}
                         </td>
                         <td>
-                            <button class="btn btn-primary" onclick="alert('Edit - Coming soon')">Edit</button>
+                            <button class="btn btn-primary" onclick="openEditModal({{ event.eventId }})">Bearbeiten</button>
                         </td>
                     </tr>
                     {% endfor %}
@@ -186,6 +305,64 @@
         </div>
     </div>
     
+    <!-- Edit Event Modal -->
+    <div id="eventModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Event bearbeiten</h2>
+                <button class="close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="eventForm">
+                    <input type="hidden" id="eventId">
+                    
+                    <div class="form-group">
+                        <label>ID</label>
+                        <input type="text" id="eventIdDisplay" class="readonly-field" readonly>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Name *</label>
+                        <input type="text" id="eventName" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Datum *</label>
+                        <input type="date" id="eventDate" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Beschreibung</label>
+                        <textarea id="eventDescription" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Notiz</label>
+                        <textarea id="eventNote" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="eventActive" style="width: 3em; height: 1.5em; cursor: pointer;">
+                            <label class="form-check-label" for="eventActive" style="margin-left: 0.5em; cursor: pointer;">
+                                Aktiv
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal()">
+                    <i class="bi bi-x-circle"></i> Abbrechen
+                </button>
+                <button class="btn btn-primary" onclick="saveEvent()">
+                    <i class="bi bi-check-circle"></i> Speichern
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         function toggleShowAll(checkbox) {
             window.location.href = '?show_all=' + checkbox.checked;
@@ -203,6 +380,77 @@
                 cell.textContent = `${year}-${month}-${day}`;
             });
         });
+        
+        async function openEditModal(eventId) {
+            try {
+                const response = await fetch(`/admin/api/events/${eventId}`);
+                if (!response.ok) throw new Error('Event konnte nicht geladen werden');
+                
+                const event = await response.json();
+                
+                document.getElementById('eventId').value = event.eventId;
+                document.getElementById('eventIdDisplay').value = event.eventId;
+                document.getElementById('eventName').value = event.name || '';
+                
+                // Convert Unix timestamp to date string (YYYY-MM-DD)
+                const date = new Date(event.timestamp * 1000);
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                document.getElementById('eventDate').value = `${year}-${month}-${day}`;
+                
+                document.getElementById('eventDescription').value = event.description || '';
+                document.getElementById('eventNote').value = event.note || '';
+                document.getElementById('eventActive').checked = event.active === 1;
+                
+                document.getElementById('eventModal').classList.add('active');
+            } catch (error) {
+                alert('Fehler beim Laden des Events: ' + error.message);
+            }
+        }
+        
+        function closeModal() {
+            document.getElementById('eventModal').classList.remove('active');
+        }
+        
+        async function saveEvent() {
+            const eventId = document.getElementById('eventId').value;
+            const dateValue = document.getElementById('eventDate').value;
+            
+            // Convert date string to Unix timestamp
+            const timestamp = Math.floor(new Date(dateValue).getTime() / 1000);
+            
+            const data = {
+                name: document.getElementById('eventName').value,
+                timestamp: timestamp,
+                description: document.getElementById('eventDescription').value,
+                note: document.getElementById('eventNote').value,
+                active: document.getElementById('eventActive').checked
+            };
+            
+            try {
+                const response = await fetch(`/admin/api/events/${eventId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                if (!response.ok) throw new Error('Event konnte nicht gespeichert werden');
+                
+                closeModal();
+                location.reload();
+            } catch (error) {
+                alert('Fehler beim Speichern: ' + error.message);
+            }
+        }
+        
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('eventModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        };
     </script>
 </body>
 </html>
