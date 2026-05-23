@@ -1,6 +1,10 @@
 # blinkyparts Kiosk - test with IBM BOB
 2026-05
 
+## blinkyparts Infos
+
+* 
+
 ## envs
 
 * dev
@@ -46,3 +50,4 @@ Raspberry Pi Auto-Update Setup
 INSERT INTO events (name, timestamp, description, note, active)
 VALUES ('Night of Science 2026', 1746835200, 'Night of Science 2026', 'Night of Science 2026', 1);
 ```
+
