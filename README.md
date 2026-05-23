@@ -3,7 +3,7 @@
 
 ## blinkyparts Infos
 
-* 
+* https://binary-kitchen.github.io/SolderingTutorial/
 
 ## envs
 
