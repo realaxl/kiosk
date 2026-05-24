@@ -600,27 +600,72 @@ def tags():
     """Tags management page"""
     conn = get_db_connection()
     
-    tags = conn.execute('''
-        SELECT t.*, p.name as productName
-        FROM tags t
-        JOIN products p ON t.productId = p.productId
-        WHERE t.active = 1
-        ORDER BY p.name, t.name
+    # Get filter parameters
+    tag_name_filter = request.args.get('tag_name', 'all')
+    show_all = request.args.get('show_all', 'false') == 'true'
+    
+    # Build query based on filters
+    query = '''
+        SELECT p.*,
+               GROUP_CONCAT(t.tagId || ':' || t.name || ':' || COALESCE(t.value, '') || ':' || t.active, '|') as tags
+        FROM products p
+        LEFT JOIN tags t ON p.productId = t.productId
+    '''
+    
+    conditions = []
+    params = []
+    
+    # Filter by tag name if not "all"
+    if tag_name_filter != 'all':
+        conditions.append('t.name = ?')
+        params.append(tag_name_filter)
+    
+    # Filter by active status
+    if not show_all:
+        conditions.append('(t.active = 1 OR t.tagId IS NULL)')
+    
+    if conditions:
+        query += ' WHERE ' + ' AND '.join(conditions)
+    
+    query += ' GROUP BY p.productId ORDER BY p.name'
+    
+    products = conn.execute(query, params).fetchall()
+    
+    # Get all unique tag names for the filter dropdown
+    tag_names = conn.execute('''
+        SELECT DISTINCT name FROM tags ORDER BY name
     ''').fetchall()
     
-    products = conn.execute('SELECT * FROM products WHERE active = 1 ORDER BY name').fetchall()
-    
     conn.close()
-    return render_template('admin_tags.html', tags=tags, products=products)
+    return render_template('admin_tags.html',
+                         products=products,
+                         tag_names=tag_names,
+                         tag_name_filter=tag_name_filter,
+                         show_all=show_all)
 
 @admin_bp.route('/api/tags', methods=['GET'])
 @require_admin
 def get_tags():
-    """Get all tags"""
+    """Get all tags or tags for a specific product"""
+    product_id = request.args.get('productId')
     conn = get_db_connection()
-    tags = conn.execute('SELECT * FROM tags ORDER BY name').fetchall()
+    
+    if product_id:
+        tags = conn.execute('SELECT * FROM tags WHERE productId = ? ORDER BY name', (product_id,)).fetchall()
+    else:
+        tags = conn.execute('SELECT * FROM tags ORDER BY name').fetchall()
+    
     conn.close()
     return jsonify([dict(tag) for tag in tags])
+
+@admin_bp.route('/api/tags/names', methods=['GET'])
+@require_admin
+def get_tag_names():
+    """Get all unique tag names"""
+    conn = get_db_connection()
+    tag_names = conn.execute('SELECT DISTINCT name FROM tags ORDER BY name').fetchall()
+    conn.close()
+    return jsonify([row['name'] for row in tag_names])
 
 @admin_bp.route('/api/tags', methods=['POST'])
 @require_admin

@@ -1,20 +1,667 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tags Management</title>
+    <title>Tag-Verwaltung - Admin</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f5f5;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.2s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-success {
+            background: #48bb78;
+            color: white;
+        }
+        
+        .btn-danger {
+            background: #f56565;
+            color: white;
+        }
+        
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 20px auto;
+            padding: 0 20px;
+        }
+        
+        .filters {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+            position: sticky;
+            top: 84px;
+            z-index: 90;
+        }
+        
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .filter-group label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #666;
+            text-transform: uppercase;
+        }
+        
+        .filter-group select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            min-width: 200px;
+        }
+        
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .toggle {
+            position: relative;
+            width: 50px;
+            height: 26px;
+        }
+        
+        .toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: 0.4s;
+            border-radius: 26px;
+        }
+        
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: 0.4s;
+            border-radius: 50%;
+        }
+        
+        .toggle input:checked + .toggle-slider {
+            background-color: #48bb78;
+        }
+        
+        .toggle input:checked + .toggle-slider:before {
+            transform: translateX(24px);
+        }
+        
+        .products-list {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        .product-item {
+            display: flex;
+            align-items: flex-start;
+            padding: 15px 20px;
+            border-bottom: 1px solid #eee;
+            transition: background 0.2s;
+        }
+        
+        .product-item:hover {
+            background: #f9f9f9;
+        }
+        
+        .product-item:last-child {
+            border-bottom: none;
+        }
+        
+        .product-thumbnail {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-right: 20px;
+            background: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+            font-size: 12px;
+            flex-shrink: 0;
+        }
+        
+        .product-thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+        
+        .product-info {
+            flex: 1;
+            min-width: 0;
+            margin-right: 20px;
+        }
+        
+        .product-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .product-description {
+            font-size: 14px;
+            color: #666;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .tags-section {
+            flex: 1;
+            min-width: 300px;
+        }
+        
+        .tags-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        
+        .tag-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            background: #e6f2ff;
+            border: 1px solid #b3d9ff;
+            border-radius: 20px;
+            font-size: 13px;
+            color: #0066cc;
+        }
+        
+        .tag-badge.inactive {
+            background: #f0f0f0;
+            border-color: #ccc;
+            color: #999;
+            text-decoration: line-through;
+        }
+        
+        .tag-name {
+            font-weight: 600;
+        }
+        
+        .tag-value {
+            color: #0052a3;
+        }
+        
+        .tag-badge.inactive .tag-value {
+            color: #666;
+        }
+        
+        .tag-delete {
+            cursor: pointer;
+            color: #f56565;
+            font-weight: bold;
+            font-size: 16px;
+            line-height: 1;
+            transition: color 0.2s;
+        }
+        
+        .tag-delete:hover {
+            color: #c53030;
+        }
+        
+        .add-tag-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 6px 12px;
+            background: #48bb78;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .add-tag-btn:hover {
+            background: #38a169;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.2s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 10% auto;
+            padding: 30px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+            animation: slideIn 0.3s;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .modal-header h2 {
+            font-size: 20px;
+            color: #333;
+        }
+        
+        .close {
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            line-height: 1;
+        }
+        
+        .close:hover {
+            color: #000;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+        
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+        
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+        
+        .empty-state h3 {
+            font-size: 20px;
+            margin-bottom: 10px;
+            color: #666;
+        }
+        
+        .empty-state p {
+            font-size: 14px;
+        }
+    </style>
 </head>
 <body>
     <div class="header">
         <div class="header-content">
-            <h1>🏷️ Tags Management</h1>
-            <a href="/admin" class="btn btn-secondary">← Back to Dashboard</a>
+            <h1>🏷️ Tag-Verwaltung</h1>
+            <a href="/admin" class="btn btn-secondary">← Zurück zum Dashboard</a>
         </div>
     </div>
+    
     <div class="container">
-        <h2>Tags - Coming Soon</h2>
-        <p>This page will allow you to manage product tags.</p>
+        <div class="filters">
+            <div class="filter-group">
+                <label>Tag-Name</label>
+                <select id="tagNameFilter" onchange="applyFilters()">
+                    <option value="all" {% if tag_name_filter == 'all' %}selected{% endif %}>Alle Tags</option>
+                    {% for tag_name in tag_names %}
+                    <option value="{{ tag_name.name }}" {% if tag_name_filter == tag_name.name %}selected{% endif %}>
+                        {{ tag_name.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="toggle-container">
+                <label class="toggle">
+                    <input type="checkbox" id="showAllToggle" {% if show_all %}checked{% endif %} onchange="applyFilters()">
+                    <span class="toggle-slider"></span>
+                </label>
+                <span>Auch inaktive Tags anzeigen</span>
+            </div>
+        </div>
+        
+        <div class="products-list">
+            {% if products %}
+                {% for product in products %}
+                <div class="product-item" data-product-id="{{ product.productId }}">
+                    <div class="product-thumbnail">
+                        {% if product.image %}
+                        <img src="/images/{{ product.image }}" alt="{{ product.name }}" onerror="this.parentElement.innerHTML='Kein Bild'">
+                        {% else %}
+                        Kein Bild
+                        {% endif %}
+                    </div>
+                    
+                    <div class="product-info">
+                        <div class="product-name">{{ product.name }}</div>
+                        <div class="product-description">{{ product.description or 'Keine Beschreibung' }}</div>
+                    </div>
+                    
+                    <div class="tags-section">
+                        <div class="tags-container" id="tags-{{ product.productId }}">
+                            {% if product.tags %}
+                                {% set tag_list = product.tags.split('|') %}
+                                {% for tag_str in tag_list %}
+                                    {% if tag_str %}
+                                        {% set tag_parts = tag_str.split(':') %}
+                                        {% set tag_id = tag_parts[0] %}
+                                        {% set tag_name = tag_parts[1] %}
+                                        {% set tag_value = tag_parts[2] %}
+                                        {% set tag_active = tag_parts[3] %}
+                                        <span class="tag-badge {% if tag_active == '0' %}inactive{% endif %}" data-tag-id="{{ tag_id }}">
+                                            <span class="tag-name">{{ tag_name }}:</span>
+                                            <span class="tag-value">{{ tag_value or '(leer)' }}</span>
+                                            <span class="tag-delete" onclick="deleteTag({{ tag_id }}, {{ product.productId }})" title="Tag löschen">×</span>
+                                        </span>
+                                    {% endif %}
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                        <button class="add-tag-btn" onclick="openAddTagModal({{ product.productId }}, '{{ product.name }}')">
+                            <span>+</span>
+                            <span>Tag hinzufügen</span>
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-state-icon">🏷️</div>
+                    <h3>Keine Produkte gefunden</h3>
+                    <p>Es gibt keine Produkte, die den ausgewählten Filterkriterien entsprechen.</p>
+                </div>
+            {% endif %}
+        </div>
     </div>
+    
+    <!-- Add Tag Modal -->
+    <div id="addTagModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Tag hinzufügen</h2>
+                <span class="close" onclick="closeAddTagModal()">&times;</span>
+            </div>
+            
+            <form id="addTagForm" onsubmit="saveTag(event)">
+                <input type="hidden" id="modalProductId">
+                
+                <div class="form-group">
+                    <label>Produkt</label>
+                    <input type="text" id="modalProductName" readonly style="background: #f5f5f5;">
+                </div>
+                
+                <div class="form-group">
+                    <label for="tagName">Tag-Name *</label>
+                    <input type="text" id="tagName" list="tagNamesList" required placeholder="Tag-Name eingeben oder auswählen">
+                    <datalist id="tagNamesList">
+                        {% for tag_name in tag_names %}
+                        <option value="{{ tag_name.name }}">
+                        {% endfor %}
+                    </datalist>
+                </div>
+                
+                <div class="form-group">
+                    <label for="tagValue">Wert *</label>
+                    <input type="text" id="tagValue" required placeholder="Tag-Wert eingeben">
+                </div>
+                
+                <div class="form-group">
+                    <label for="tagNote">Notiz (optional)</label>
+                    <textarea id="tagNote" placeholder="Zusätzliche Informationen zum Tag"></textarea>
+                </div>
+                
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeAddTagModal()">Abbrechen</button>
+                    <button type="submit" class="btn btn-success">Speichern</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        function applyFilters() {
+            const tagName = document.getElementById('tagNameFilter').value;
+            const showAll = document.getElementById('showAllToggle').checked;
+            
+            const params = new URLSearchParams();
+            params.set('tag_name', tagName);
+            params.set('show_all', showAll);
+            
+            window.location.href = '/admin/tags?' + params.toString();
+        }
+        
+        function openAddTagModal(productId, productName) {
+            document.getElementById('modalProductId').value = productId;
+            document.getElementById('modalProductName').value = productName;
+            document.getElementById('tagName').value = '';
+            document.getElementById('tagValue').value = '';
+            document.getElementById('tagNote').value = '';
+            document.getElementById('addTagModal').style.display = 'block';
+        }
+        
+        function closeAddTagModal() {
+            document.getElementById('addTagModal').style.display = 'none';
+        }
+        
+        async function saveTag(event) {
+            event.preventDefault();
+            
+            const productId = document.getElementById('modalProductId').value;
+            const tagName = document.getElementById('tagName').value;
+            const tagValue = document.getElementById('tagValue').value;
+            const tagNote = document.getElementById('tagNote').value;
+            
+            try {
+                const response = await fetch('/admin/api/tags', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        productId: parseInt(productId),
+                        name: tagName,
+                        value: tagValue,
+                        note: tagNote,
+                        active: true
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    closeAddTagModal();
+                    // Reload the page to show the new tag
+                    window.location.reload();
+                } else {
+                    alert('Fehler beim Speichern des Tags: ' + (result.error || 'Unbekannter Fehler'));
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Fehler beim Speichern des Tags: ' + error.message);
+            }
+        }
+        
+        async function deleteTag(tagId, productId) {
+            if (!confirm('Möchten Sie diesen Tag wirklich löschen?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/admin/api/tags/${tagId}`, {
+                    method: 'DELETE'
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Remove the tag badge from the UI
+                    const tagBadge = document.querySelector(`[data-tag-id="${tagId}"]`);
+                    if (tagBadge) {
+                        tagBadge.remove();
+                    }
+                } else {
+                    alert('Fehler beim Löschen des Tags: ' + (result.error || 'Unbekannter Fehler'));
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Fehler beim Löschen des Tags: ' + error.message);
+            }
+        }
+        
+        // Close modal when clicking outside of it
+        window.onclick = function(event) {
+            const modal = document.getElementById('addTagModal');
+            if (event.target == modal) {
+                closeAddTagModal();
+            }
+        }
+    </script>
 </body>
 </html>
