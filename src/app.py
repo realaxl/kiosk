@@ -18,7 +18,7 @@ from functools import wraps
 # Load environment variables from .env file
 load_dotenv()
 
-app = Flask(__name__, template_folder='../templates')
+app = Flask(__name__, template_folder='../templates', static_folder='../static')
 app.secret_key = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
 
 # Get the project root directory (parent of src directory)
