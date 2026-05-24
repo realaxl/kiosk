@@ -476,28 +476,33 @@
         </div>
     </div>
     
+    <!-- Filters Section (moved to top) -->
+    <div class="event-selector">
+        <div class="event-selector-content" style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                <label style="font-weight: 600; color: #333; font-size: 14px;">Kategorie (Produkte & Bestand):</label>
+                <select id="categoryFilter" onchange="filterBoth()" style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;">
+                    <option value="">Alle Kategorien</option>
+                    {% for category in categories %}
+                    <option value="{{ category['productCategoryId'] }}">{{ category['name'] }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                <label style="font-weight: 600; color: #333; font-size: 14px;">Anzeigeoptionen:</label>
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="checkbox" id="showAllFilter" onchange="filterBoth()" style="cursor: pointer;">
+                    <span>Alle anzeigen (auch inaktive)</span>
+                </label>
+            </div>
+        </div>
+    </div>
+    
     <div class="main-container">
         <!-- Left Column: Products -->
         <div class="column">
             <div class="column-header">
                 <h2>📦 Produkte</h2>
-                <div class="filters">
-                    <div class="filter-group">
-                        <label>Kategorie</label>
-                        <select id="productCategoryFilter" onchange="filterProducts()">
-                            <option value="">Alle Kategorien</option>
-                            {% for category in categories %}
-                            <option value="{{ category['productCategoryId'] }}">{{ category['name'] }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="filter-group">
-                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                            <input type="checkbox" id="showAllProductsFilter" onchange="filterProducts()" style="cursor: pointer;">
-                            <span>Alle anzeigen (auch inaktive)</span>
-                        </label>
-                    </div>
-                </div>
             </div>
             <div class="column-body" id="productsList">
                 {% for product in products %}
@@ -536,23 +541,6 @@
         <div class="column">
             <div class="column-header">
                 <h2>📋 Bestand</h2>
-                <div class="filters">
-                    <div class="filter-group">
-                        <label>Kategorie</label>
-                        <select id="stockCategoryFilter" onchange="filterStocks()">
-                            <option value="">Alle Kategorien</option>
-                            {% for category in categories %}
-                            <option value="{{ category['productCategoryId'] }}">{{ category['name'] }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="filter-group">
-                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                            <input type="checkbox" id="showAllStocksFilter" onchange="filterStocks()" style="cursor: pointer;">
-                            <span>Alle anzeigen (auch inaktive)</span>
-                        </label>
-                    </div>
-                </div>
             </div>
             <div class="column-body" id="stocksList">
                 <div class="empty-state">
@@ -640,20 +628,34 @@
             }
         });
         
+        // Combined filter function for both columns
+        function filterBoth() {
+            filterProducts();
+            filterStocks();
+        }
+        
         // Filter products in left column
         function filterProducts() {
-            const categoryFilter = document.getElementById('productCategoryFilter').value;
-            const showAll = document.getElementById('showAllProductsFilter').checked;
+            const categoryFilter = document.getElementById('categoryFilter').value;
+            const showAll = document.getElementById('showAllFilter').checked;
             const items = document.querySelectorAll('.product-item');
+            
+            // Get list of product IDs that are already in stock
+            const productsInStock = new Set();
+            stocksData.forEach(stock => {
+                productsInStock.add(stock.productId);
+            });
             
             items.forEach(item => {
                 const category = item.dataset.category;
                 const active = item.dataset.active === '1';
+                const productId = parseInt(item.dataset.productId);
                 
                 let showCategory = !categoryFilter || category === categoryFilter;
                 let showActive = showAll || active;
+                let notInStock = !productsInStock.has(productId);
                 
-                if (showCategory && showActive) {
+                if (showCategory && showActive && notInStock) {
                     item.style.display = 'flex';
                 } else {
                     item.style.display = 'none';
@@ -663,8 +665,8 @@
         
         // Filter stocks in right column
         function filterStocks() {
-            const categoryFilter = document.getElementById('stockCategoryFilter').value;
-            const showAll = document.getElementById('showAllStocksFilter').checked;
+            const categoryFilter = document.getElementById('categoryFilter').value;
+            const showAll = document.getElementById('showAllFilter').checked;
             const items = document.querySelectorAll('.stock-item');
             
             items.forEach(item => {
@@ -714,6 +716,8 @@
                     `;
                 } else {
                     renderStocks();
+                    // Re-filter products to hide those now in stock
+                    filterProducts();
                 }
             } catch (error) {
                 alert('Fehler beim Laden der Bestände: ' + error.message);
@@ -886,7 +890,7 @@
                 if (!response.ok) throw new Error('Bestand konnte nicht gespeichert werden');
                 
                 closeModal();
-                loadStocks();
+                await loadStocks();
             } catch (error) {
                 alert('Fehler beim Speichern: ' + error.message);
             }
@@ -905,7 +909,7 @@
                 
                 if (!response.ok) throw new Error('Bestand konnte nicht gelöscht werden');
                 
-                loadStocks();
+                await loadStocks();
             } catch (error) {
                 alert('Fehler beim Löschen: ' + error.message);
             }
