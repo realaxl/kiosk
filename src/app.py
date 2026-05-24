@@ -18,7 +18,7 @@ from functools import wraps
 # Load environment variables from .env file
 load_dotenv()
 
-app = Flask(__name__, template_folder='../templates')
+app = Flask(__name__, template_folder='../templates', static_folder='../static')
 app.secret_key = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
 
 # Get the project root directory (parent of src directory)
@@ -29,6 +29,14 @@ DB_NAME = os.getenv('DB_NAME', 'db.sqlite')
 PORT = int(os.getenv('PORT', 5000))
 ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD')
 EVENT_NAME = os.getenv('EVENT')
+FULL_WIDTH = os.getenv('FULL_WIDTH', 'false').lower() in ('true', '1', 'yes')
+
+@app.context_processor
+def inject_config():
+    """Inject configuration variables into all templates"""
+    return {
+        'full_width': FULL_WIDTH
+    }
 
 def get_db_connection():
     """Create a database connection"""

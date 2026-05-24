@@ -28,3 +28,10 @@ the top part of both columns should stay on top, not scroll
     - a red button to remove the product from the stock, which means to delete this row in the database
 	- a yellow button to edit the product in the stock, which means to update the row in the database including properties salePrice, active, initialNumberInStock, currentNumberInStock
 
+-------------------------------------------------------------------------------
+
+on the stock admin page:
+- move the category selection to the top of the page
+- move the "show all" Alle anzeigen toggle to the top of the page
+- on the left panel side with the products, do not show products that already are in stock
+

@@ -4,459 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bestandsverwaltung - Admin</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Custom Admin CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: #f5f5f5;
             height: 100vh;
             display: flex;
             flex-direction: column;
-        }
-        
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            flex-shrink: 0;
-        }
-        
-        .header-content {
-            max-width: 1800px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .header h1 {
-            font-size: 24px;
-        }
-        
-        .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            text-decoration: none;
-            display: inline-block;
-            transition: all 0.2s;
-        }
-        
-        .btn:hover {
-            transform: translateY(-2px);
-        }
-        
-        .btn-secondary {
-            background: rgba(160, 160, 160, 0.7);
-            color: white;
-        }
-        
-        .btn-primary {
-            background: #667eea;
-            color: white;
-        }
-        
-        .btn-success {
-            background: #48bb78;
-            color: white;
-        }
-        
-        .btn-danger {
-            background: #f56565;
-            color: white;
-        }
-        
-        .btn-warning {
-            background: #ecc94b;
-            color: #2d3748;
-        }
-        
-        .btn-sm {
-            padding: 5px 10px;
-            font-size: 12px;
-        }
-        
-        .event-selector {
-            background: white;
-            padding: 15px 20px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            flex-shrink: 0;
-        }
-        
-        .event-selector-content {
-            max-width: 1800px;
-            margin: 0 auto;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        
-        .event-selector label {
-            font-weight: 600;
-            color: #333;
-        }
-        
-        .event-selector select {
-            padding: 8px 12px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size: 14px;
-            min-width: 300px;
-        }
-        
-        .main-container {
-            flex: 1;
-            display: flex;
-            overflow: hidden;
-            max-width: 1800px;
-            margin: 0 auto;
-            width: 100%;
-            padding: 20px;
-            gap: 20px;
-        }
-        
-        .column {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-        }
-        
-        .column-header {
-            padding: 20px;
-            border-bottom: 2px solid #eee;
-            background: #fafafa;
-            flex-shrink: 0;
-        }
-        
-        .column-header h2 {
-            font-size: 18px;
-            margin-bottom: 15px;
-            color: #333;
-        }
-        
-        .filters {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-        
-        .filter-group {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-        
-        .filter-group label {
-            font-size: 12px;
-            font-weight: 600;
-            color: #666;
-            text-transform: uppercase;
-        }
-        
-        .filter-group select {
-            padding: 8px 12px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size: 14px;
-        }
-        
-        .toggle-container {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .toggle {
-            position: relative;
-            width: 50px;
-            height: 26px;
-        }
-        
-        .toggle input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-        
-        .toggle-slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ccc;
-            transition: 0.4s;
-            border-radius: 26px;
-        }
-        
-        .toggle-slider:before {
-            position: absolute;
-            content: "";
-            height: 18px;
-            width: 18px;
-            left: 4px;
-            bottom: 4px;
-            background-color: white;
-            transition: 0.4s;
-            border-radius: 50%;
-        }
-        
-        .toggle input:checked + .toggle-slider {
-            background-color: #48bb78;
-        }
-        
-        .toggle input:checked + .toggle-slider:before {
-            transform: translateX(24px);
-        }
-        
-        .column-body {
-            flex: 1;
-            overflow-y: auto;
-            padding: 10px;
-        }
-        
-        .item {
-            display: flex;
-            align-items: center;
-            padding: 12px;
-            border: 1px solid #eee;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            transition: all 0.2s;
-        }
-        
-        .item:hover {
-            background: #f9f9f9;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-        }
-        
-        .item-thumbnail {
-            width: 60px;
-            height: 60px;
-            object-fit: cover;
-            border-radius: 6px;
-            margin-right: 15px;
-            background: #f0f0f0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #999;
-            font-size: 10px;
-            text-align: center;
-            flex-shrink: 0;
-        }
-        
-        .item-thumbnail img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            border-radius: 6px;
-        }
-        
-        .item-info {
-            flex: 1;
-            min-width: 0;
-        }
-        
-        .item-name {
-            font-size: 14px;
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 3px;
-        }
-        
-        .item-description {
-            font-size: 12px;
-            color: #666;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        
-        .item-meta {
-            font-size: 11px;
-            color: #999;
-            margin-top: 3px;
-        }
-        
-        .item-actions {
-            display: flex;
-            gap: 8px;
-            flex-shrink: 0;
-        }
-        
-        .stock-details {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 8px;
-            margin-top: 8px;
-            padding-top: 8px;
-            border-top: 1px solid #eee;
-        }
-        
-        .stock-detail {
-            font-size: 11px;
-        }
-        
-        .stock-detail-label {
-            color: #666;
-            font-weight: 600;
-        }
-        
-        .stock-detail-value {
-            color: #333;
-        }
-        
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            color: #999;
-        }
-        
-        .empty-state-icon {
-            font-size: 48px;
-            margin-bottom: 15px;
-        }
-        
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            overflow-y: auto;
-        }
-        
-        .modal.active {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .modal-content {
-            background-color: white;
-            margin: 20px;
-            padding: 0;
-            border-radius: 10px;
-            width: 90%;
-            max-width: 600px;
-            max-height: 90vh;
-            overflow-y: auto;
-            box-shadow: 0 5px 30px rgba(0, 0, 0, 0.3);
-        }
-        
-        .modal-header {
-            padding: 20px;
-            border-bottom: 1px solid #eee;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: sticky;
-            top: 0;
-            background: white;
-            z-index: 1;
-        }
-        
-        .modal-header h2 {
-            font-size: 20px;
-            color: #333;
-        }
-        
-        .close {
-            font-size: 28px;
-            font-weight: bold;
-            color: #aaa;
-            cursor: pointer;
-            line-height: 1;
-        }
-        
-        .close:hover {
-            color: #000;
-        }
-        
-        .modal-body {
-            padding: 20px;
-        }
-        
-        .form-group {
-            margin-bottom: 20px;
-        }
-        
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 600;
-            color: #333;
-            font-size: 14px;
-        }
-        
-        .form-group input[type="text"],
-        .form-group input[type="number"],
-        .form-group textarea,
-        .form-group select {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size: 14px;
-            font-family: inherit;
-        }
-        
-        .form-group textarea {
-            resize: vertical;
-            min-height: 60px;
-        }
-        
-        .form-group input:focus,
-        .form-group textarea:focus,
-        .form-group select:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-        
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-        }
-        
-        .modal-footer {
-            padding: 20px;
-            border-top: 1px solid #eee;
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-            position: sticky;
-            bottom: 0;
-            background: white;
-        }
-        
-        .readonly-field {
-            background-color: #f5f5f5;
-            color: #666;
         }
     </style>
 </head>
 <body>
     <div class="header">
-        <div class="header-content">
+        <div class="header-content{% if not full_width %} limited-width{% endif %}">
             <h1>📊 Bestandsverwaltung</h1>
             <a href="/admin" class="btn btn-secondary">← Zurück zum Dashboard</a>
         </div>
@@ -476,28 +40,33 @@
         </div>
     </div>
     
-    <div class="main-container">
+    <!-- Filters Section (moved to top) -->
+    <div class="event-selector">
+        <div class="event-selector-content{% if not full_width %} limited-width{% endif %}" style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                <label style="font-weight: 600; color: #333; font-size: 14px;">Kategorie (Produkte & Bestand):</label>
+                <select id="categoryFilter" onchange="filterBoth()" style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;">
+                    <option value="">Alle Kategorien</option>
+                    {% for category in categories %}
+                    <option value="{{ category['productCategoryId'] }}">{{ category['name'] }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                <label style="font-weight: 600; color: #333; font-size: 14px;">Anzeigeoptionen:</label>
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="checkbox" id="showAllFilter" onchange="filterBoth()" style="cursor: pointer;">
+                    <span>Alle anzeigen (auch inaktive)</span>
+                </label>
+            </div>
+        </div>
+    </div>
+    
+    <div class="main-container{% if not full_width %} limited-width{% endif %}">
         <!-- Left Column: Products -->
         <div class="column">
             <div class="column-header">
                 <h2>📦 Produkte</h2>
-                <div class="filters">
-                    <div class="filter-group">
-                        <label>Kategorie</label>
-                        <select id="productCategoryFilter" onchange="filterProducts()">
-                            <option value="">Alle Kategorien</option>
-                            {% for category in categories %}
-                            <option value="{{ category['productCategoryId'] }}">{{ category['name'] }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="filter-group">
-                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                            <input type="checkbox" id="showAllProductsFilter" onchange="filterProducts()" style="cursor: pointer;">
-                            <span>Alle anzeigen (auch inaktive)</span>
-                        </label>
-                    </div>
-                </div>
             </div>
             <div class="column-body" id="productsList">
                 {% for product in products %}
@@ -536,23 +105,6 @@
         <div class="column">
             <div class="column-header">
                 <h2>📋 Bestand</h2>
-                <div class="filters">
-                    <div class="filter-group">
-                        <label>Kategorie</label>
-                        <select id="stockCategoryFilter" onchange="filterStocks()">
-                            <option value="">Alle Kategorien</option>
-                            {% for category in categories %}
-                            <option value="{{ category['productCategoryId'] }}">{{ category['name'] }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="filter-group">
-                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                            <input type="checkbox" id="showAllStocksFilter" onchange="filterStocks()" style="cursor: pointer;">
-                            <span>Alle anzeigen (auch inaktive)</span>
-                        </label>
-                    </div>
-                </div>
             </div>
             <div class="column-body" id="stocksList">
                 <div class="empty-state">
@@ -640,20 +192,34 @@
             }
         });
         
+        // Combined filter function for both columns
+        function filterBoth() {
+            filterProducts();
+            filterStocks();
+        }
+        
         // Filter products in left column
         function filterProducts() {
-            const categoryFilter = document.getElementById('productCategoryFilter').value;
-            const showAll = document.getElementById('showAllProductsFilter').checked;
+            const categoryFilter = document.getElementById('categoryFilter').value;
+            const showAll = document.getElementById('showAllFilter').checked;
             const items = document.querySelectorAll('.product-item');
+            
+            // Get list of product IDs that are already in stock
+            const productsInStock = new Set();
+            stocksData.forEach(stock => {
+                productsInStock.add(stock.productId);
+            });
             
             items.forEach(item => {
                 const category = item.dataset.category;
                 const active = item.dataset.active === '1';
+                const productId = parseInt(item.dataset.productId);
                 
                 let showCategory = !categoryFilter || category === categoryFilter;
                 let showActive = showAll || active;
+                let notInStock = !productsInStock.has(productId);
                 
-                if (showCategory && showActive) {
+                if (showCategory && showActive && notInStock) {
                     item.style.display = 'flex';
                 } else {
                     item.style.display = 'none';
@@ -663,8 +229,8 @@
         
         // Filter stocks in right column
         function filterStocks() {
-            const categoryFilter = document.getElementById('stockCategoryFilter').value;
-            const showAll = document.getElementById('showAllStocksFilter').checked;
+            const categoryFilter = document.getElementById('categoryFilter').value;
+            const showAll = document.getElementById('showAllFilter').checked;
             const items = document.querySelectorAll('.stock-item');
             
             items.forEach(item => {
@@ -714,6 +280,8 @@
                     `;
                 } else {
                     renderStocks();
+                    // Re-filter products to hide those now in stock
+                    filterProducts();
                 }
             } catch (error) {
                 alert('Fehler beim Laden der Bestände: ' + error.message);
@@ -886,7 +454,7 @@
                 if (!response.ok) throw new Error('Bestand konnte nicht gespeichert werden');
                 
                 closeModal();
-                loadStocks();
+                await loadStocks();
             } catch (error) {
                 alert('Fehler beim Speichern: ' + error.message);
             }
@@ -905,7 +473,7 @@
                 
                 if (!response.ok) throw new Error('Bestand konnte nicht gelöscht werden');
                 
-                loadStocks();
+                await loadStocks();
             } catch (error) {
                 alert('Fehler beim Löschen: ' + error.message);
             }
