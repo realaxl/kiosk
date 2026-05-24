@@ -340,13 +340,13 @@
 </head>
 <body>
     <div class="header">
-        <div class="header-content">
+        <div class="header-content{% if not full_width %} limited-width{% endif %}">
             <h1>🏷️ Tag-Verwaltung</h1>
             <a href="/admin" class="btn btn-secondary">← Zurück zum Dashboard</a>
         </div>
     </div>
     
-    <div class="container">
+    <div class="container-custom{% if not full_width %} limited-width{% endif %}">
         <div class="filters">
             <div class="filter-group">
                 <label>Tag-Name</label>

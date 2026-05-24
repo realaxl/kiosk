@@ -20,7 +20,7 @@
 </head>
 <body>
     <div class="header">
-        <div class="header-content">
+        <div class="header-content{% if not full_width %} limited-width{% endif %}">
             <h1>📊 Bestandsverwaltung</h1>
             <a href="/admin" class="btn btn-secondary">← Zurück zum Dashboard</a>
         </div>
@@ -42,7 +42,7 @@
     
     <!-- Filters Section (moved to top) -->
     <div class="event-selector">
-        <div class="event-selector-content" style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+        <div class="event-selector-content{% if not full_width %} limited-width{% endif %}" style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
             <div style="display: flex; flex-direction: column; gap: 12px;">
                 <label style="font-weight: 600; color: #333; font-size: 14px;">Kategorie (Produkte & Bestand):</label>
                 <select id="categoryFilter" onchange="filterBoth()" style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;">
@@ -62,7 +62,7 @@
         </div>
     </div>
     
-    <div class="main-container">
+    <div class="main-container{% if not full_width %} limited-width{% endif %}">
         <!-- Left Column: Products -->
         <div class="column">
             <div class="column-header">

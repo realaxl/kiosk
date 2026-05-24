@@ -205,7 +205,7 @@
 </head>
 <body>
     <div class="header">
-        <div class="header-content">
+        <div class="header-content{% if not full_width %} limited-width{% endif %}">
             <h1>📂 Product Categories Management</h1>
             <div>
                 <a href="/admin" class="btn btn-secondary">← Back to Dashboard</a>
@@ -213,7 +213,7 @@
         </div>
     </div>
     
-    <div class="container">
+    <div class="container-custom{% if not full_width %} limited-width{% endif %}">
         <div class="toolbar">
             <button class="btn btn-primary" onclick="openAddModal()">+ Add Category</button>
             <div class="toggle">

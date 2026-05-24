@@ -317,13 +317,13 @@
 </head>
 <body>
     <div class="header">
-        <div class="header-content">
+        <div class="header-content{% if not full_width %} limited-width{% endif %}">
             <h1>📦 Produktverwaltung</h1>
             <a href="/admin" class="btn btn-secondary">← Zurück zum Dashboard</a>
         </div>
     </div>
     
-    <div class="container">
+    <div class="container-custom{% if not full_width %} limited-width{% endif %}">
         <div class="actions-bar">
             <h2>Produkte</h2>
             <button class="btn btn-success" onclick="openCreateModal()">+ Neues Produkt</button>

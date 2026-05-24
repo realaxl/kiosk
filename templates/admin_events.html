@@ -156,7 +156,7 @@
 </head>
 <body>
     <div class="header">
-        <div class="header-content">
+        <div class="header-content{% if not full_width %} limited-width{% endif %}">
             <h1>📅 Event-Verwaltung</h1>
             <div>
                 <a href="/admin" class="btn btn-secondary">← Zurück zum Dashboard</a>
@@ -164,7 +164,7 @@
         </div>
     </div>
     
-    <div class="container">
+    <div class="container-custom{% if not full_width %} limited-width{% endif %}">
         <div class="toolbar">
             <button class="btn btn-primary" onclick="alert('Event hinzufügen - Demnächst verfügbar')">+ Event hinzufügen</button>
             <div class="toggle">

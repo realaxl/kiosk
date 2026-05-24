@@ -13,12 +13,12 @@
 </head>
 <body>
     <div class="header">
-        <div class="header-content">
+        <div class="header-content{% if not full_width %} limited-width{% endif %}">
             <h1>💰 Sales Management</h1>
             <a href="/admin" class="btn btn-secondary">← Back to Dashboard</a>
         </div>
     </div>
-    <div class="container-custom">
+    <div class="container-custom{% if not full_width %} limited-width{% endif %}">
         <h2>Sales - Coming Soon</h2>
         <p>This page will allow you to view and manage sales.</p>
     </div>
