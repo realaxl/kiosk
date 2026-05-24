@@ -16,3 +16,7 @@
     * Enable/disable = "warning" - yellow
     * Links to external sites, manuals etc. = "info" - light blue
 
+* for timestamp display, use the one of the two formats below
+    * "01.01.2023" for events, products etc. - German format
+    * "01.01.2023 12:34:56" - German format - for sales
+* for prices, assume Euro / € currency

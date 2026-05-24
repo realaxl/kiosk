@@ -1,5 +1,14 @@
-# blinkyparts Kiosk - test with IBM BOB
+# blinkyparts Kiosk - test with IBM BOB (kiosk-with-bob)
+
 2026-05
+
+- create a Kiosk app for a small sales kiosk
+- runs stand alone on Windows 11 and a Raspberry Pi
+- local SQL database
+- Python backend
+- HTML + JavaScript frontend
+- Bootstrap 5
+
 
 ## envs
 
