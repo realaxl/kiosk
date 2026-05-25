@@ -30,12 +30,14 @@ PORT = int(os.getenv('PORT', 5000))
 ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD')
 EVENT_NAME = os.getenv('EVENT')
 FULL_WIDTH = os.getenv('FULL_WIDTH', 'false').lower() in ('true', '1', 'yes')
+ALLOW_ADMIN = os.getenv('ALLOW_ADMIN', 'true').lower() in ('true', '1', 'yes')
 
 @app.context_processor
 def inject_config():
     """Inject configuration variables into all templates"""
     return {
-        'full_width': FULL_WIDTH
+        'full_width': FULL_WIDTH,
+        'allow_admin': ALLOW_ADMIN
     }
 
 def get_db_connection():

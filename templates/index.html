@@ -45,6 +45,11 @@
     <nav class="navbar navbar-dark bg-primary mb-4">
         <div class="container-fluid">
             <span class="navbar-brand mb-0 h1">{% if event_name %}{{ event_name }}{% else %}Produktkatalog{% endif %}</span>
+            {% if allow_admin %}
+            <a href="/admin" class="btn btn-light btn-sm">
+                ⚙️ Admin
+            </a>
+            {% endif %}
         </div>
     </nav>
 
