@@ -68,15 +68,26 @@ SCHEMA = {
             "FOREIGN KEY (productId) REFERENCES products(productId)"
         ]
     },
+    "carts": {
+        "columns": {
+            "cartId": "INTEGER PRIMARY KEY",
+            "name": "TEXT",
+            "timestamp": "INTEGER NOT NULL",
+            "note": "TEXT",
+            "active": "INTEGER NOT NULL DEFAULT 1"
+        }
+    },
     "sales": {
         "columns": {
             "saleId": "INTEGER PRIMARY KEY",
+            "cartId": "INTEGER",
             "stockId": "INTEGER NOT NULL",
             "numberItemsSold": "INTEGER NOT NULL",
             "timestamp": "INTEGER NOT NULL",
             "note": "TEXT"
         },
         "foreign_keys": [
+            "FOREIGN KEY (cartId) REFERENCES carts(cartId)",
             "FOREIGN KEY (stockId) REFERENCES stocks(stockId)"
         ]
     },
@@ -185,7 +196,7 @@ def main():
             create_table(cursor, table_name, table_schema)
         
         print(f"\n[OK] Database created successfully")
-        print("Tables created: events, productCategories, products, stocks, sales, tags")
+        print("Tables created: events, productCategories, products, stocks, carts, sales, tags")
         print("Foreign key constraints enabled")
     
     # Commit changes and close connection

@@ -20,57 +20,38 @@
             position: sticky;
             top: 84px;
             z-index: 90;
+            background: white;
+            padding: 20px;
+            margin: -20px -20px 20px -20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .filters-row {
+            display: flex;
+            gap: 20px;
+            align-items: flex-end;
+            margin-bottom: 15px;
+        }
+        
+        .filter-group {
+            flex: 1;
             min-width: 200px;
         }
         
-        .toggle-container {
-            display: flex;
-            align-items: center;
-            gap: 10px;
+        .filter-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
         }
         
-        .toggle {
-            position: relative;
-            width: 50px;
-            height: 26px;
-        }
-        
-        .toggle input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-        
-        .toggle-slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ccc;
-            transition: 0.4s;
-            border-radius: 26px;
-        }
-        
-        .toggle-slider:before {
-            position: absolute;
-            content: "";
-            height: 18px;
-            width: 18px;
-            left: 4px;
-            bottom: 4px;
-            background-color: white;
-            transition: 0.4s;
-            border-radius: 50%;
-        }
-        
-        .toggle input:checked + .toggle-slider {
-            background-color: #48bb78;
-        }
-        
-        .toggle input:checked + .toggle-slider:before {
-            transform: translateX(24px);
+        .filter-group select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            background: white;
         }
         
         .products-list {
@@ -348,16 +329,30 @@
     
     <div class="container-custom{% if not full_width %} limited-width{% endif %}">
         <div class="filters">
-            <div class="filter-group">
-                <label>Tag-Name</label>
-                <select id="tagNameFilter" onchange="applyFilters()">
-                    <option value="all" {% if tag_name_filter == 'all' %}selected{% endif %}>Alle Tags</option>
-                    {% for tag_name in tag_names %}
-                    <option value="{{ tag_name.name }}" {% if tag_name_filter == tag_name.name %}selected{% endif %}>
-                        {{ tag_name.name }}
-                    </option>
-                    {% endfor %}
-                </select>
+            <div class="filters-row">
+                <div class="filter-group">
+                    <label>Tag-Name</label>
+                    <select id="tagNameFilter" onchange="applyFilters()">
+                        <option value="all" {% if tag_name_filter == 'all' %}selected{% endif %}>Alle Tags</option>
+                        {% for tag_name in tag_names %}
+                        <option value="{{ tag_name.name }}" {% if tag_name_filter == tag_name.name %}selected{% endif %}>
+                            {{ tag_name.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label>Event</label>
+                    <select id="eventFilter" onchange="applyFilters()">
+                        <option value="all" {% if event_filter == 'all' %}selected{% endif %}>Alle Events</option>
+                        {% for event in events %}
+                        <option value="{{ event.eventId }}" {% if event_filter == event.eventId|string %}selected{% endif %}>
+                            {{ event.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
             </div>
             
             <div class="toggle-container">
@@ -439,6 +434,14 @@
                     <input type="text" id="modalProductName" readonly style="background: #f5f5f5;">
                 </div>
                 
+                <!-- Existing Tag Combinations Section -->
+                <div class="form-group" id="existingTagsSection" style="display: none;">
+                    <label>Vorhandene Tag-Kombinationen</label>
+                    <div id="existingTagBadges" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px;">
+                        <!-- Badges will be inserted here by JavaScript -->
+                    </div>
+                </div>
+                
                 <div class="form-group">
                     <label for="tagName">Tag-Name *</label>
                     <input type="text" id="tagName" list="tagNamesList" required placeholder="Tag-Name eingeben oder auswählen">
@@ -469,23 +472,134 @@
     
     <script>
         function applyFilters() {
+            const eventFilter = document.getElementById('eventFilter').value;
             const tagName = document.getElementById('tagNameFilter').value;
             const showAll = document.getElementById('showAllToggle').checked;
             
             const params = new URLSearchParams();
+            params.set('event', eventFilter);
             params.set('tag_name', tagName);
             params.set('show_all', showAll);
             
             window.location.href = '/admin/tags?' + params.toString();
         }
         
-        function openAddTagModal(productId, productName) {
+        async function openAddTagModal(productId, productName) {
             document.getElementById('modalProductId').value = productId;
             document.getElementById('modalProductName').value = productName;
             document.getElementById('tagName').value = '';
             document.getElementById('tagValue').value = '';
             document.getElementById('tagNote').value = '';
+            
+            // Load existing tag combinations
+            await loadExistingTagCombinations(productId);
+            
             document.getElementById('addTagModal').style.display = 'block';
+        }
+        
+        async function loadExistingTagCombinations(productId) {
+            try {
+                const response = await fetch(`/admin/api/tags/combinations?productId=${productId}`);
+                const combinations = await response.json();
+                
+                const badgesContainer = document.getElementById('existingTagBadges');
+                const section = document.getElementById('existingTagsSection');
+                
+                // Filter out already assigned tags
+                const availableCombinations = combinations.filter(combo => !combo.assigned);
+                
+                if (availableCombinations.length > 0) {
+                    // Clear existing badges
+                    badgesContainer.innerHTML = '';
+                    
+                    // Create badge for each combination
+                    availableCombinations.forEach(combo => {
+                        const badge = document.createElement('span');
+                        badge.className = 'tag-badge clickable-badge';
+                        badge.style.cursor = 'pointer';
+                        badge.style.display = 'inline-flex';
+                        badge.style.alignItems = 'center';
+                        badge.style.gap = '4px';
+                        badge.style.padding = '6px 10px';
+                        badge.style.backgroundColor = '#e3f2fd';
+                        badge.style.border = '1px solid #2196F3';
+                        badge.style.borderRadius = '4px';
+                        badge.style.fontSize = '14px';
+                        badge.style.transition = 'all 0.2s';
+                        
+                        badge.innerHTML = `
+                            <span style="font-weight: 500;">${escapeHtml(combo.name)}</span>
+                            <span style="color: #666;">:</span>
+                            <span>${escapeHtml(combo.value)}</span>
+                            <span style="color: #2196F3; font-weight: bold; margin-left: 4px;">+</span>
+                        `;
+                        
+                        badge.title = 'Klicken um diesen Tag zuzuweisen';
+                        
+                        // Add hover effect
+                        badge.onmouseenter = function() {
+                            this.style.backgroundColor = '#2196F3';
+                            this.style.color = 'white';
+                            this.style.transform = 'scale(1.05)';
+                        };
+                        badge.onmouseleave = function() {
+                            this.style.backgroundColor = '#e3f2fd';
+                            this.style.color = 'inherit';
+                            this.style.transform = 'scale(1)';
+                        };
+                        
+                        // Add click handler to assign tag
+                        badge.onclick = () => assignExistingTag(combo.name, combo.value);
+                        
+                        badgesContainer.appendChild(badge);
+                    });
+                    
+                    section.style.display = 'block';
+                } else {
+                    section.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Error loading tag combinations:', error);
+            }
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        async function assignExistingTag(tagName, tagValue) {
+            const productId = document.getElementById('modalProductId').value;
+            
+            try {
+                const response = await fetch('/admin/api/tags', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        productId: parseInt(productId),
+                        name: tagName,
+                        value: tagValue,
+                        note: '',
+                        active: true
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    closeAddTagModal();
+                    // Reload the page to show the new tag
+                    window.location.reload();
+                } else {
+                    alert('Fehler beim Zuweisen des Tags: ' + (result.error || 'Unbekannter Fehler'));
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Fehler beim Zuweisen des Tags: ' + error.message);
+            }
         }
         
         function closeAddTagModal() {

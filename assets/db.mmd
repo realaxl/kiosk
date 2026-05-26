@@ -4,6 +4,7 @@ erDiagram
      stocks ||--o{ sales : has
      productCategories ||--o{ products : has
      tags ||--o{ products : has
+     carts ||--o{ sales : contains
 
      events {
          int eventId PK
@@ -50,13 +51,21 @@ erDiagram
          int active
      }
 
+     carts {
+         int cartId PK
+         string name
+         int timestamp
+         string note
+         int active
+     }
+     
      sales {
          int saleId PK
+         int cartId FK
          int stockId FK
          int numberItemsSold
          int timestamp
          string note
-         int active
      }
 
      tags {

@@ -35,17 +35,6 @@
             color: #721c24;
         }
         
-        .toggle {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .toggle input[type="checkbox"] {
-            width: 20px;
-            height: 20px;
-        }
-        
         /* Modal Styles */
         .modal {
             display: none;
@@ -216,10 +205,13 @@
     <div class="container-custom{% if not full_width %} limited-width{% endif %}">
         <div class="toolbar">
             <button class="btn btn-primary" onclick="openAddModal()">+ Add Category</button>
-            <div class="toggle">
-                <input type="checkbox" id="showAll" {% if show_all %}checked{% endif %}
-                       onchange="toggleShowAll(this)">
-                <label for="showAll">Show All (including inactive)</label>
+            <div class="toggle-container">
+                <label class="toggle">
+                    <input type="checkbox" id="showAll" {% if show_all %}checked{% endif %}
+                           onchange="toggleShowAll(this)">
+                    <span class="toggle-slider"></span>
+                </label>
+                <span>Show All (including inactive)</span>
             </div>
         </div>
         
