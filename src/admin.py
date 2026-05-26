@@ -600,32 +600,63 @@ def tags():
     """Tags management page"""
     conn = get_db_connection()
     
-    # Get filter parameters
+    # Get current event (most recent active event)
+    current_event = conn.execute('''
+        SELECT eventId, name FROM events
+        WHERE active = 1
+        ORDER BY timestamp DESC
+        LIMIT 1
+    ''').fetchone()
+    
+    # Get filter parameters - default to current event ID if available
     tag_name_filter = request.args.get('tag_name', 'all')
     show_all = request.args.get('show_all', 'false') == 'true'
+    default_event = str(current_event['eventId']) if current_event else 'all'
+    event_filter = request.args.get('event', default_event)
+    
+    # Get all events for the filter dropdown
+    events = conn.execute('''
+        SELECT eventId, name FROM events
+        WHERE active = 1
+        ORDER BY timestamp DESC
+    ''').fetchall()
     
     # Build query based on filters
     query = '''
-        SELECT p.*,
+        SELECT DISTINCT p.*,
                GROUP_CONCAT(t.tagId || ':' || t.name || ':' || COALESCE(t.value, '') || ':' || t.active, '|') as tags
         FROM products p
         LEFT JOIN tags t ON p.productId = t.productId
     '''
     
-    conditions = []
-    params = []
+    # Add event filtering via stocks
+    if event_filter != 'all':
+        # Specific event selected
+        query += '''
+            INNER JOIN stocks s ON p.productId = s.productId
+            WHERE s.eventId = ? AND s.active = 1
+        '''
+        params = [int(event_filter)]
+    else:
+        params = []
+    
+    # Additional conditions
+    additional_conditions = []
     
     # Filter by tag name if not "all"
     if tag_name_filter != 'all':
-        conditions.append('t.name = ?')
+        additional_conditions.append('t.name = ?')
         params.append(tag_name_filter)
     
     # Filter by active status
     if not show_all:
-        conditions.append('(t.active = 1 OR t.tagId IS NULL)')
+        additional_conditions.append('(t.active = 1 OR t.tagId IS NULL)')
     
-    if conditions:
-        query += ' WHERE ' + ' AND '.join(conditions)
+    if additional_conditions:
+        if event_filter == 'all':
+            query += ' WHERE ' + ' AND '.join(additional_conditions)
+        else:
+            query += ' AND ' + ' AND '.join(additional_conditions)
     
     query += ' GROUP BY p.productId ORDER BY p.name'
     
@@ -640,7 +671,10 @@ def tags():
     return render_template('admin_tags.html',
                          products=products,
                          tag_names=tag_names,
+                         events=events,
+                         current_event=current_event,
                          tag_name_filter=tag_name_filter,
+                         event_filter=event_filter,
                          show_all=show_all)
 
 @admin_bp.route('/api/tags', methods=['GET'])
@@ -666,6 +700,44 @@ def get_tag_names():
     tag_names = conn.execute('SELECT DISTINCT name FROM tags ORDER BY name').fetchall()
     conn.close()
     return jsonify([row['name'] for row in tag_names])
+
+@admin_bp.route('/api/tags/combinations', methods=['GET'])
+@require_admin
+def get_tag_combinations():
+    """Get all unique tag name/value combinations"""
+    product_id = request.args.get('productId')
+    conn = get_db_connection()
+    
+    # Get all unique combinations
+    combinations = conn.execute('''
+        SELECT DISTINCT name, value
+        FROM tags
+        WHERE active = 1
+        ORDER BY name, value
+    ''').fetchall()
+    
+    # If productId is provided, mark which ones are already assigned
+    if product_id:
+        assigned = conn.execute('''
+            SELECT DISTINCT name, value
+            FROM tags
+            WHERE productId = ? AND active = 1
+        ''', (product_id,)).fetchall()
+        
+        assigned_set = {(row['name'], row['value']) for row in assigned}
+        result = [
+            {
+                'name': row['name'],
+                'value': row['value'],
+                'assigned': (row['name'], row['value']) in assigned_set
+            }
+            for row in combinations
+        ]
+    else:
+        result = [{'name': row['name'], 'value': row['value'], 'assigned': False} for row in combinations]
+    
+    conn.close()
+    return jsonify(result)
 
 @admin_bp.route('/api/tags', methods=['POST'])
 @require_admin
