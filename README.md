@@ -36,8 +36,6 @@ WARNING: This is a development server. Do not use it in a production deployment.
 
 ## KioskPi - running app on RasPi
 
-
-
 Raspberry Pi Auto-Update Setup
 /tmp/kiosk-auto-update.log
 
@@ -61,9 +59,6 @@ VALUES ('Night of Science 2026', 1746835200, 'Night of Science 2026', 'Night of 
 ## blinkyparts Infos
 
 * https://binary-kitchen.github.io/SolderingTutorial/
-
-
-
 
 * **50ohmDummyLoad** — [EN](https://binary-kitchen.github.io/SolderingTutorial/50ohmDummyLoad/manual/50ohmDummyLoad_en.pdf) · [DE](https://binary-kitchen.github.io/SolderingTutorial/50ohmDummyLoad/manual/50ohmDummyLoad_de.pdf)
 * **AlHackaAlpaka** — [EN](https://binary-kitchen.github.io/SolderingTutorial/AlHackaAlpaka/manual/AlHackaAlpaka_en.pdf) · [DE](https://binary-kitchen.github.io/SolderingTutorial/AlHackaAlpaka/manual/AlHackaAlpaka_de.pdf)
