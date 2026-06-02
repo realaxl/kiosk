@@ -5,7 +5,7 @@
 - create a Kiosk app for a small sales kiosk
 - runs stand alone on Windows 11 and a Raspberry Pi
 - local SQL database (SQLite)
-- Python API backend
+- Python REST API backend
 - HTML + JavaScript frontend
 - Bootstrap 5
 
