@@ -35,3 +35,7 @@ on the stock admin page:
 - move the "show all" Alle anzeigen toggle to the top of the page
 - on the left panel side with the products, do not show products that already are in stock
 
+- when an initial stock number is entered, update the current number in stock property
+- add the purchasePrice of the product to the salesPrice
+
+- add a Bearbeiten button to the products list that uses the existing product editing page for that product
