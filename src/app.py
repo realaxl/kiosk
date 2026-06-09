@@ -153,7 +153,7 @@ def index():
     # Get products that have stock for the current event
     if current_event:
         products = conn.execute('''
-            SELECT DISTINCT p.*
+            SELECT DISTINCT p.*, s.salePrice as eventSalePrice
             FROM products p
             INNER JOIN stocks s ON p.productId = s.productId
             WHERE p.active = 1
@@ -162,8 +162,8 @@ def index():
             AND s.currentNumberInStock > 0
         ''', (current_event['eventId'],)).fetchall()
     else:
-        # No event found, show all active products
-        products = conn.execute('SELECT * FROM products WHERE active = 1').fetchall()
+        # No event found, show all active products with purchasePrice as fallback
+        products = conn.execute('SELECT *, purchasePrice as eventSalePrice FROM products WHERE active = 1').fetchall()
     
     # Get tags for each product
     products_with_tags = []
