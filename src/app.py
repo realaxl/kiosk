@@ -5,6 +5,11 @@ import os
 # Set environment variable to ensure UTF-8 encoding on Windows
 if sys.platform == 'win32':
     os.environ['PYTHONIOENCODING'] = 'utf-8'
+    # Force UTF-8 encoding for stdout/stderr
+    if hasattr(sys.stdout, 'reconfigure'):
+        sys.stdout.reconfigure(encoding='utf-8')
+    if hasattr(sys.stderr, 'reconfigure'):
+        sys.stderr.reconfigure(encoding='utf-8')
 
 from flask import Flask, render_template, send_from_directory, jsonify, request, session, redirect, url_for
 import sqlite3
@@ -224,15 +229,59 @@ def serve_image(filename):
 
 @app.route('/api/product/<int:product_id>')
 def get_product(product_id):
-    """Get product details by ID"""
+    """Get product details by ID with stock and category information for current event"""
     conn = get_db_connection()
-    product = conn.execute('SELECT * FROM products WHERE productId = ?', (product_id,)).fetchone()
-    conn.close()
+    
+    # Get current event
+    current_event = None
+    if EVENT_NAME:
+        current_event = conn.execute(
+            'SELECT * FROM events WHERE name = ? AND active = 1', (EVENT_NAME,)
+        ).fetchone()
+    
+    if not current_event:
+        current_event = conn.execute(
+            'SELECT * FROM events WHERE active = 1 ORDER BY timestamp DESC LIMIT 1'
+        ).fetchone()
+    
+    # Get product with category information
+    product = conn.execute('''
+        SELECT p.*, pc.name as categoryName
+        FROM products p
+        LEFT JOIN productCategories pc ON p.productCategoryId = pc.productCategoryId
+        WHERE p.productId = ?
+    ''', (product_id,)).fetchone()
     
     if product is None:
+        conn.close()
         return jsonify({'error': 'Product not found'}), 404
     
-    return jsonify(dict(product))
+    product_dict = dict(product)
+    
+    # Get stock information for current event
+    if current_event:
+        stock = conn.execute('''
+            SELECT * FROM stocks
+            WHERE productId = ? AND eventId = ? AND active = 1
+        ''', (product_id, current_event['eventId'])).fetchone()
+        
+        if stock:
+            product_dict['stock'] = dict(stock)
+        else:
+            product_dict['stock'] = None
+    else:
+        product_dict['stock'] = None
+    
+    # Get tags for this product
+    tags = conn.execute('''
+        SELECT name, value FROM tags
+        WHERE productId = ? AND active = 1
+    ''', (product_id,)).fetchall()
+    
+    product_dict['tags'] = [dict(tag) for tag in tags]
+    
+    conn.close()
+    return jsonify(product_dict)
 
 @app.route('/api/product/<int:product_id>', methods=['PUT'])
 def update_product(product_id):
