@@ -128,10 +128,10 @@
                         <img id="modalProductImage" src="" alt="" class="img-fluid" style="max-height: 400px;">
                     </div>
                     
-                    <!-- Product Category -->
-                    <div class="mb-3" id="categorySection">
-                        <label class="form-label fw-bold">Kategorie:</label>
-                        <p id="modalProductCategory" class="mb-0"></p>
+                    <!-- Description -->
+                    <div class="mb-3" id="descriptionSection" style="display: none;">
+                        <label class="form-label fw-bold">Beschreibung:</label>
+                        <p id="modalProductDescription" class="mb-0"></p>
                     </div>
                     
                     <!-- Sale Price -->
@@ -146,12 +146,6 @@
                         <div id="modalProductTags" class="d-flex flex-wrap gap-2"></div>
                     </div>
                     
-                    <!-- Description -->
-                    <div class="mb-3" id="descriptionSection" style="display: none;">
-                        <label class="form-label fw-bold">Beschreibung:</label>
-                        <p id="modalProductDescription" class="mb-0"></p>
-                    </div>
-                    
                     <!-- Manual URL with QR Code -->
                     <div class="mb-3" id="manualSection" style="display: none;">
                         <label class="form-label fw-bold">Anleitung:</label>
@@ -164,49 +158,13 @@
                                 <p id="modalManualUrlText" class="mb-0 mt-2 small text-muted"></p>
                             </div>
                         </div>
-                        
-                        <div class="mb-3">
-                            <label for="productPrice" class="form-label">Einkaufspreis</label>
-                            <input type="number" step="0.01" class="form-control" id="productPrice" name="purchasePrice" required>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="productImage" class="form-label">Bild</label>
-                            <input type="text" class="form-control" id="productImage" name="image">
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="productDescription" class="form-label">Beschreibung</label>
-                            <textarea class="form-control" id="productDescription" name="description" rows="5"></textarea>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="productUrl" class="form-label">URL</label>
-                            <input type="text" class="form-control" id="productUrl" name="url">
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="productManualUrl" class="form-label">Anleitung URL</label>
-                            <input type="text" class="form-control" id="productManualUrl" name="manualUrl">
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="productNote" class="form-label">Notiz</label>
-                            <textarea class="form-control" id="productNote" name="note" rows="5"></textarea>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="productCategory" class="form-label">Kategorie</label>
-                            <select class="form-select" id="productCategory" name="productCategoryId">
-                                <option value="">Keine Kategorie</option>
-                            </select>
-                        </div>
-                        
-                        <div class="mb-3 form-check form-switch">
-                            <input class="form-check-input" type="checkbox" id="productActive" name="active">
-                            <label class="form-check-label" for="productActive">Aktiv</label>
-                        </div>
-                    </form>
+                    </div>
+                    
+                    <!-- Product Category -->
+                    <div class="mb-3" id="categorySection">
+                        <label class="form-label fw-bold">Kategorie:</label>
+                        <p id="modalProductCategory" class="mb-0"></p>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
