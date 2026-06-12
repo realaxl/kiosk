@@ -39,6 +39,13 @@
             font-size: 0.75rem;
             padding: 0.25rem 0.5rem;
         }
+        /* Ensure modal appears above backdrop */
+        .modal {
+            z-index: 1050;
+        }
+        .modal-backdrop {
+            z-index: 1040;
+        }
     </style>
 </head>
 <body>
@@ -57,7 +64,7 @@
         <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
             {% for product in products %}
             <div class="col">
-                <div class="card product-card" onclick="openEditModal({{ product['productId'] }})">
+                <div class="card product-card" onclick="openProductModal({{ product['productId'] }})">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <span>{{ product['name'] }}</span>
                         <!-- DEBUG: tags={{ product.get('tags', 'NO TAGS KEY') }} -->
@@ -86,7 +93,7 @@
                     <div class="card-footer">
                         <div class="d-flex justify-content-between align-items-center">
                             <span class="text-muted">Preis:</span>
-                            <span class="h5 mb-0 text-success">{{ "%.2f"|format(product['purchasePrice']) }} €</span>
+                            <span class="h5 mb-0 text-success">{{ "%.2f"|format(product['eventSalePrice']) }} €</span>
                         </div>
                     </div>
                 </div>
@@ -102,21 +109,60 @@
         {% endif %}
     </div>
 
-    <!-- Edit Product Modal -->
-    <div class="modal fade" id="editProductModal" tabindex="-1" aria-labelledby="editProductModalLabel" aria-hidden="true">
+    <!-- Product Details Modal (Read-Only) -->
+    <div class="modal fade" id="productModal" tabindex="-1" aria-labelledby="productModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="editProductModalLabel">Produkt bearbeiten</h5>
+                    <h5 class="modal-title" id="productModalLabel">Produktdetails</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
                 </div>
                 <div class="modal-body">
-                    <form id="editProductForm">
-                        <input type="hidden" id="productId" name="productId">
-                        
-                        <div class="mb-3">
-                            <label for="productName" class="form-label">Name</label>
-                            <input type="text" class="form-control" id="productName" name="name" required>
+                    <!-- Out of Stock Message -->
+                    <div id="outOfStockMessage" class="alert alert-warning" style="display: none;">
+                        <i class="bi bi-exclamation-triangle"></i> <strong>Nicht mehr verfügbar</strong>
+                    </div>
+                    
+                    <!-- Product Image -->
+                    <div class="text-center mb-3">
+                        <img id="modalProductImage" src="" alt="" class="img-fluid" style="max-height: 400px;">
+                    </div>
+                    
+                    <!-- Product Category -->
+                    <div class="mb-3" id="categorySection">
+                        <label class="form-label fw-bold">Kategorie:</label>
+                        <p id="modalProductCategory" class="mb-0"></p>
+                    </div>
+                    
+                    <!-- Sale Price -->
+                    <div class="mb-3" id="priceSection">
+                        <label class="form-label fw-bold">Verkaufspreis:</label>
+                        <p id="modalProductPrice" class="mb-0 h4 text-success"></p>
+                    </div>
+                    
+                    <!-- Tags -->
+                    <div class="mb-3" id="tagsSection" style="display: none;">
+                        <label class="form-label fw-bold">Tags:</label>
+                        <div id="modalProductTags" class="d-flex flex-wrap gap-2"></div>
+                    </div>
+                    
+                    <!-- Description -->
+                    <div class="mb-3" id="descriptionSection" style="display: none;">
+                        <label class="form-label fw-bold">Beschreibung:</label>
+                        <p id="modalProductDescription" class="mb-0"></p>
+                    </div>
+                    
+                    <!-- Manual URL with QR Code -->
+                    <div class="mb-3" id="manualSection" style="display: none;">
+                        <label class="form-label fw-bold">Anleitung:</label>
+                        <div class="d-flex align-items-center gap-3">
+                            <div id="qrCodeContainer"></div>
+                            <div>
+                                <a id="modalManualUrl" href="" target="_blank" class="btn btn-primary">
+                                    <i class="bi bi-file-earmark-text"></i> Anleitung öffnen
+                                </a>
+                                <p id="modalManualUrlText" class="mb-0 mt-2 small text-muted"></p>
+                            </div>
                         </div>
                         
                         <div class="mb-3">
@@ -164,10 +210,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        <i class="bi bi-x-circle"></i> Abbrechen
-                    </button>
-                    <button type="button" class="btn btn-primary" onclick="saveProduct()">
-                        <i class="bi bi-save"></i> Speichern
+                        <i class="bi bi-x-circle"></i> Schließen
                     </button>
                 </div>
             </div>
@@ -176,15 +219,22 @@
 
     <!-- Bootstrap 5 JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- QR Code Library -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
     
     <script>
-        let editModal;
+        let productModal;
         
         document.addEventListener('DOMContentLoaded', function() {
-            editModal = new bootstrap.Modal(document.getElementById('editProductModal'));
+            const modalElement = document.getElementById('productModal');
+            productModal = new bootstrap.Modal(modalElement, {
+                backdrop: true,
+                keyboard: true,
+                focus: true
+            });
         });
         
-        async function openEditModal(productId) {
+        async function openProductModal(productId) {
             try {
                 const response = await fetch(`/api/product/${productId}`);
                 if (!response.ok) {
@@ -193,59 +243,98 @@
                 
                 const product = await response.json();
                 
-                // Populate form fields
-                document.getElementById('productId').value = product.productId;
-                document.getElementById('productName').value = product.name || '';
-                document.getElementById('productPrice').value = product.purchasePrice || '';
-                document.getElementById('productDescription').value = product.description || '';
-                document.getElementById('productImage').value = product.image || '';
-                document.getElementById('productUrl').value = product.url || '';
-                document.getElementById('productManualUrl').value = product.manualUrl || '';
-                document.getElementById('productNote').value = product.note || '';
-                document.getElementById('productActive').checked = product.active === 1;
+                // Set modal title
+                document.getElementById('productModalLabel').textContent = product.name || 'Produktdetails';
+                
+                // Check stock availability
+                const outOfStockMsg = document.getElementById('outOfStockMessage');
+                const priceSection = document.getElementById('priceSection');
+                
+                if (!product.stock || product.stock.currentNumberInStock <= 0) {
+                    // Out of stock
+                    outOfStockMsg.style.display = 'block';
+                    priceSection.style.display = 'none';
+                } else {
+                    // In stock
+                    outOfStockMsg.style.display = 'none';
+                    priceSection.style.display = 'block';
+                    
+                    // Show sale price from stocks table
+                    const price = product.stock.salePrice || 0;
+                    document.getElementById('modalProductPrice').textContent = price.toFixed(2) + ' €';
+                }
+                
+                // Show product image (cached version)
+                const modalImage = document.getElementById('modalProductImage');
+                if (product.image) {
+                    modalImage.src = `/images/${product.image}`;
+                    modalImage.alt = product.name;
+                    modalImage.style.display = 'block';
+                } else {
+                    modalImage.style.display = 'none';
+                }
+                
+                // Show category
+                const categorySection = document.getElementById('categorySection');
+                if (product.categoryName) {
+                    document.getElementById('modalProductCategory').textContent = product.categoryName;
+                    categorySection.style.display = 'block';
+                } else {
+                    categorySection.style.display = 'none';
+                }
+                
+                // Show tags
+                const tagsSection = document.getElementById('tagsSection');
+                const tagsContainer = document.getElementById('modalProductTags');
+                tagsContainer.innerHTML = '';
+                
+                if (product.tags && product.tags.length > 0) {
+                    product.tags.forEach(tag => {
+                        const badge = document.createElement('span');
+                        badge.className = 'badge bg-info text-dark';
+                        badge.textContent = `${tag.name}: ${tag.value}`;
+                        tagsContainer.appendChild(badge);
+                    });
+                    tagsSection.style.display = 'block';
+                } else {
+                    tagsSection.style.display = 'none';
+                }
+                
+                // Show description
+                const descriptionSection = document.getElementById('descriptionSection');
+                if (product.description) {
+                    document.getElementById('modalProductDescription').textContent = product.description;
+                    descriptionSection.style.display = 'block';
+                } else {
+                    descriptionSection.style.display = 'none';
+                }
+                
+                // Show manual URL with QR code
+                const manualSection = document.getElementById('manualSection');
+                const qrCodeContainer = document.getElementById('qrCodeContainer');
+                qrCodeContainer.innerHTML = '';
+                
+                if (product.manualUrl) {
+                    // Generate QR code
+                    new QRCode(qrCodeContainer, {
+                        text: product.manualUrl,
+                        width: 128,
+                        height: 128
+                    });
+                    
+                    // Set manual URL link and text
+                    document.getElementById('modalManualUrl').href = product.manualUrl;
+                    document.getElementById('modalManualUrlText').textContent = product.manualUrl;
+                    manualSection.style.display = 'block';
+                } else {
+                    manualSection.style.display = 'none';
+                }
                 
                 // Show modal
-                editModal.show();
+                productModal.show();
             } catch (error) {
                 console.error('Fehler beim Laden des Produkts:', error);
                 alert('Produktdetails konnten nicht geladen werden');
-            }
-        }
-        
-        async function saveProduct() {
-            const productId = document.getElementById('productId').value;
-            const formData = {
-                name: document.getElementById('productName').value,
-                purchasePrice: parseFloat(document.getElementById('productPrice').value),
-                description: document.getElementById('productDescription').value,
-                image: document.getElementById('productImage').value,
-                url: document.getElementById('productUrl').value,
-                manualUrl: document.getElementById('productManualUrl').value,
-                note: document.getElementById('productNote').value,
-                active: document.getElementById('productActive').checked
-            };
-            
-            try {
-                const response = await fetch(`/api/product/${productId}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(formData)
-                });
-                
-                if (!response.ok) {
-                    throw new Error('Produkt konnte nicht aktualisiert werden');
-                }
-                
-                const result = await response.json();
-                
-                // Close modal and reload page
-                editModal.hide();
-                location.reload();
-            } catch (error) {
-                console.error('Fehler beim Speichern des Produkts:', error);
-                alert('Produkt konnte nicht gespeichert werden');
             }
         }
     </script>
