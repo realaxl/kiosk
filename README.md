@@ -9,6 +9,7 @@
 - HTML + JavaScript frontend
 - Bootstrap 5
 
+- Deployment to Kiosk Pi @ 2026-06-12
 
 ## envs
 
