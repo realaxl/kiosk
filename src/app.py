@@ -36,13 +36,17 @@ ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD')
 EVENT_NAME = os.getenv('EVENT')
 FULL_WIDTH = os.getenv('FULL_WIDTH', 'false').lower() in ('true', '1', 'yes')
 ALLOW_ADMIN = os.getenv('ALLOW_ADMIN', 'true').lower() in ('true', '1', 'yes')
+SLIDESHOW_DELAY = int(os.getenv('SLIDESHOW_DELAY', 7))
+SLIDESHOW_ORDER_RANDOM = os.getenv('SLIDESHOW_ORDER_RANDOM', 'false').lower() in ('true', '1', 'yes')
 
 @app.context_processor
 def inject_config():
     """Inject configuration variables into all templates"""
     return {
         'full_width': FULL_WIDTH,
-        'allow_admin': ALLOW_ADMIN
+        'allow_admin': ALLOW_ADMIN,
+        'slideshow_delay': SLIDESHOW_DELAY,
+        'slideshow_order_random': SLIDESHOW_ORDER_RANDOM
     }
 
 def get_db_connection():

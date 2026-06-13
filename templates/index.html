@@ -46,17 +46,169 @@
         .modal-backdrop {
             z-index: 1040;
         }
+        
+        /* Slideshow Styles */
+        #slideshowContainer {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            z-index: 2000;
+            overflow: hidden;
+        }
+        
+        #slideshowContainer.active {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .slideshow-header {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: white;
+        }
+        
+        .slideshow-content {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            overflow: hidden;
+        }
+        
+        .slideshow-slide {
+            display: none;
+            width: 100%;
+            max-width: 1400px;
+            opacity: 0;
+            transform: scale(0.95);
+            transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+        }
+        
+        .slideshow-slide.active {
+            display: block;
+            opacity: 1;
+            transform: scale(1);
+        }
+        
+        .slideshow-product {
+            background: white;
+            border-radius: 1rem;
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            align-items: start;
+        }
+        
+        .slideshow-image-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .slideshow-image {
+            max-width: 100%;
+            max-height: 50vh;
+            object-fit: contain;
+            border-radius: 0.5rem;
+        }
+        
+        .slideshow-details {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        
+        .slideshow-title {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin: 0;
+        }
+        
+        .slideshow-price {
+            font-size: 2rem;
+            color: #198754;
+            font-weight: bold;
+        }
+        
+        .slideshow-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        
+        .slideshow-tag {
+            font-size: 1.2rem;
+            padding: 0.5rem 1rem;
+        }
+        
+        .slideshow-category {
+            font-size: 1.3rem;
+            color: #6c757d;
+        }
+        
+        .slideshow-manual {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 0.5rem;
+        }
+        
+        .slideshow-qr {
+            flex-shrink: 0;
+        }
+        
+        .slideshow-manual-info {
+            flex: 1;
+        }
+        
+        .slideshow-manual-url {
+            font-size: 0.9rem;
+            color: #6c757d;
+            word-break: break-all;
+            margin-top: 0.5rem;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(100px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        .slideshow-slide.active .slideshow-product {
+            animation: slideIn 0.5s ease-out;
+        }
     </style>
 </head>
 <body>
     <nav class="navbar navbar-dark bg-primary mb-4">
         <div class="container-fluid">
             <span class="navbar-brand mb-0 h1">{% if event_name %}{{ event_name }}{% else %}Produktkatalog{% endif %}</span>
-            {% if allow_admin %}
-            <a href="/admin" class="btn btn-light btn-sm">
-                ⚙️ Admin
-            </a>
-            {% endif %}
+            <div class="d-flex gap-2">
+                <button id="slideshowBtn" class="btn btn-light btn-sm" onclick="startSlideshow()">
+                    <i class="bi bi-play-circle"></i> Slideshow
+                </button>
+                {% if allow_admin %}
+                <a href="/admin" class="btn btn-light btn-sm">
+                    ⚙️ Admin
+                </a>
+                {% endif %}
+            </div>
         </div>
     </nav>
 
@@ -172,6 +324,19 @@
                     </button>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Slideshow Container -->
+    <div id="slideshowContainer">
+        <div class="slideshow-header">
+            <h2 class="mb-0">{% if event_name %}{{ event_name }} - {% endif %}Slideshow</h2>
+            <button class="btn btn-light" onclick="stopSlideshow()">
+                <i class="bi bi-x-lg"></i> Schließen
+            </button>
+        </div>
+        <div class="slideshow-content" id="slideshowContent">
+            <!-- Slides will be dynamically inserted here -->
         </div>
     </div>
 
@@ -295,6 +460,198 @@
                 alert('Produktdetails konnten nicht geladen werden');
             }
         }
+        
+        // Slideshow functionality
+        let slideshowInterval = null;
+        let currentSlideIndex = 0;
+        let slideshowProducts = [];
+        const SLIDESHOW_DELAY = {{ slideshow_delay }} * 1000; // Convert to milliseconds
+        const SLIDESHOW_RANDOM = {{ 'true' if slideshow_order_random else 'false' }};
+        
+        async function startSlideshow() {
+            try {
+                // Get all products from the current page
+                const productCards = document.querySelectorAll('.product-card');
+                const productIds = Array.from(productCards).map(card => {
+                    const onclickAttr = card.getAttribute('onclick');
+                    const match = onclickAttr.match(/openProductModal\((\d+)\)/);
+                    return match ? parseInt(match[1]) : null;
+                }).filter(id => id !== null);
+                
+                if (productIds.length === 0) {
+                    alert('Keine Produkte für die Slideshow verfügbar');
+                    return;
+                }
+                
+                // Fetch all product details
+                slideshowProducts = [];
+                for (const productId of productIds) {
+                    const response = await fetch(`/api/product/${productId}`);
+                    if (response.ok) {
+                        const product = await response.json();
+                        slideshowProducts.push(product);
+                    }
+                }
+                
+                if (slideshowProducts.length === 0) {
+                    alert('Keine Produkte konnten geladen werden');
+                    return;
+                }
+                
+                // Randomize order if configured
+                if (SLIDESHOW_RANDOM) {
+                    slideshowProducts = shuffleArray(slideshowProducts);
+                }
+                
+                // Show slideshow container
+                const container = document.getElementById('slideshowContainer');
+                container.classList.add('active');
+                
+                // Create slides
+                createSlides();
+                
+                // Start slideshow
+                currentSlideIndex = 0;
+                showSlide(currentSlideIndex);
+                
+                // Auto-advance slides
+                slideshowInterval = setInterval(() => {
+                    currentSlideIndex = (currentSlideIndex + 1) % slideshowProducts.length;
+                    showSlide(currentSlideIndex);
+                }, SLIDESHOW_DELAY);
+                
+            } catch (error) {
+                console.error('Fehler beim Starten der Slideshow:', error);
+                alert('Slideshow konnte nicht gestartet werden');
+            }
+        }
+        
+        function stopSlideshow() {
+            // Clear interval
+            if (slideshowInterval) {
+                clearInterval(slideshowInterval);
+                slideshowInterval = null;
+            }
+            
+            // Hide slideshow container
+            const container = document.getElementById('slideshowContainer');
+            container.classList.remove('active');
+            
+            // Clear slides
+            document.getElementById('slideshowContent').innerHTML = '';
+            slideshowProducts = [];
+            currentSlideIndex = 0;
+        }
+        
+        function createSlides() {
+            const content = document.getElementById('slideshowContent');
+            content.innerHTML = '';
+            
+            slideshowProducts.forEach((product, index) => {
+                const slide = document.createElement('div');
+                slide.className = 'slideshow-slide';
+                slide.id = `slide-${index}`;
+                
+                // Build tags HTML
+                let tagsHtml = '';
+                if (product.tags && product.tags.length > 0) {
+                    tagsHtml = '<div class="slideshow-tags">';
+                    product.tags.forEach(tag => {
+                        tagsHtml += `<span class="badge bg-info text-dark slideshow-tag">${tag.value}</span>`;
+                    });
+                    tagsHtml += '</div>';
+                }
+                
+                // Build manual section HTML
+                let manualHtml = '';
+                if (product.manualUrl) {
+                    manualHtml = `
+                        <div class="slideshow-manual">
+                            <div class="slideshow-qr" id="qr-${index}"></div>
+                            <div class="slideshow-manual-info">
+                                <a href="${product.manualUrl}" target="_blank" class="btn btn-primary btn-lg">
+                                    <i class="bi bi-file-earmark-text"></i> Anleitung öffnen
+                                </a>
+                                <p class="slideshow-manual-url">${product.manualUrl}</p>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                // Get price from stock
+                const price = product.stock && product.stock.salePrice ? product.stock.salePrice.toFixed(2) : '0.00';
+                
+                slide.innerHTML = `
+                    <div class="slideshow-product">
+                        <div class="slideshow-image-container">
+                            ${product.image ?
+                                `<img src="/images/${product.image}" alt="${product.name}" class="slideshow-image">` :
+                                '<div class="text-muted">Kein Bild verfügbar</div>'
+                            }
+                        </div>
+                        <div class="slideshow-details">
+                            <h1 class="slideshow-title">${product.name}</h1>
+                            ${tagsHtml}
+                            ${product.description ?
+                                `<div>
+                                    <label class="fw-bold">Beschreibung:</label>
+                                    <p class="mb-3">${product.description}</p>
+                                </div>` : ''
+                            }
+                            <div>
+                                <label class="fw-bold">Verkaufspreis:</label>
+                                <div class="slideshow-price">${price} €</div>
+                            </div>
+                            ${manualHtml}
+                        </div>
+                    </div>
+                `;
+                
+                content.appendChild(slide);
+                
+                // Generate QR code if manual URL exists
+                if (product.manualUrl) {
+                    setTimeout(() => {
+                        const qrContainer = document.getElementById(`qr-${index}`);
+                        if (qrContainer) {
+                            new QRCode(qrContainer, {
+                                text: product.manualUrl,
+                                width: 150,
+                                height: 150
+                            });
+                        }
+                    }, 100);
+                }
+            });
+        }
+        
+        function showSlide(index) {
+            // Hide all slides
+            const slides = document.querySelectorAll('.slideshow-slide');
+            slides.forEach(slide => slide.classList.remove('active'));
+            
+            // Show current slide
+            const currentSlide = document.getElementById(`slide-${index}`);
+            if (currentSlide) {
+                currentSlide.classList.add('active');
+            }
+        }
+        
+        function shuffleArray(array) {
+            const shuffled = [...array];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        }
+        
+        // Handle escape key to close slideshow
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape' && slideshowInterval) {
+                stopSlideshow();
+            }
+        });
     </script>
 </body>
 </html>
