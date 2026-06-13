@@ -9,7 +9,6 @@
 - HTML + JavaScript frontend
 - Bootstrap 5
 
-- Deployment to Kiosk Pi @ 2026-06-12
 
 ## envs
 
@@ -18,9 +17,11 @@
     * IBM BOB
     * uv
     * Python 3
-* prod
+* stage
     * Raspberry Pi 400
     * KioskPi
+* prod
+    * kiosk (Pi4) for [blinkyparts](https://binary-kitchen.github.io/SolderingTutorial/) @ 2026-06-12 / [Night of Science 2026](https://nightofscience.de/)
 
 ## running app on Windows 11
 
@@ -44,9 +45,9 @@ Raspberry Pi Auto-Update Setup
 ## Support
 
 ### Tools
-* git (local repo): http://172.16.0.16:5000/ibm/kiosk-with-bob
-* git reset --hard origin/main: how-do-i-force-git-pull-to-overwrite-local-files
 * [Mermaid online editor](https://www.mermaidflow.app/editor)
+* git (local repo): http://172.16.0.16:5000/ibm/kiosk-with-bob
+* git (remote repo): [git@github.com:realaxl/kiosk.git](https://github.com/realaxl/kiosk)
 
 
 ### SQL Statements
