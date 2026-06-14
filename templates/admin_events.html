@@ -193,7 +193,12 @@
                             {% endif %}
                         </td>
                         <td>
-                            <button class="btn btn-primary" onclick="openEditModal({{ event.eventId }})">Bearbeiten</button>
+                            <a href="/admin/events/{{ event.eventId }}/report" class="btn btn-info btn-sm">
+                                <i class="bi bi-file-earmark-bar-graph"></i> Bericht
+                            </a>
+                            <button class="btn btn-primary btn-sm" onclick="openEditModal({{ event.eventId }})">
+                                <i class="bi bi-pencil"></i> Bearbeiten
+                            </button>
                         </td>
                     </tr>
                     {% endfor %}

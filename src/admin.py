@@ -141,6 +141,88 @@ def delete_event(event_id):
         return jsonify({'error': str(e)}), 500
 
 # ============================================================================
+# EVENT REPORTING ROUTES
+# ============================================================================
+
+@admin_bp.route('/events/<int:event_id>/report')
+@require_admin
+def event_report(event_id):
+    """Event reporting page - read-only view of event statistics"""
+    conn = get_db_connection()
+    
+    # Get event details
+    event = conn.execute('SELECT * FROM events WHERE eventId = ?', (event_id,)).fetchone()
+    
+    if event is None:
+        conn.close()
+        return "Event not found", 404
+    
+    # Get all stocks for this event with product information
+    stocks = conn.execute('''
+        SELECT
+            s.stockId,
+            s.initialNumberInStock,
+            s.currentNumberInStock,
+            s.salePrice,
+            s.note,
+            p.productId,
+            p.name as productName,
+            p.description as productDescription,
+            p.image as productImage
+        FROM stocks s
+        JOIN products p ON s.productId = p.productId
+        WHERE s.eventId = ? AND s.active = 1
+        ORDER BY p.name
+    ''', (event_id,)).fetchall()
+    
+    # Calculate summary statistics
+    total_initial_stock = 0
+    total_remaining_stock = 0
+    total_sold = 0
+    total_revenue = 0.0
+    
+    # Prepare stock data with calculated fields
+    stock_data = []
+    for stock in stocks:
+        initial = stock['initialNumberInStock']
+        remaining = stock['currentNumberInStock']
+        sold = initial - remaining
+        revenue = sold * stock['salePrice']
+        
+        total_initial_stock += initial
+        total_remaining_stock += remaining
+        total_sold += sold
+        total_revenue += revenue
+        
+        stock_data.append({
+            'stockId': stock['stockId'],
+            'productId': stock['productId'],
+            'productName': stock['productName'],
+            'productDescription': stock['productDescription'],
+            'productImage': stock['productImage'],
+            'initialNumberInStock': initial,
+            'currentNumberInStock': remaining,
+            'numberSold': sold,
+            'salePrice': stock['salePrice'],
+            'revenue': revenue,
+            'note': stock['note']
+        })
+    
+    summary = {
+        'total_initial_stock': total_initial_stock,
+        'total_remaining_stock': total_remaining_stock,
+        'total_sold': total_sold,
+        'total_revenue': total_revenue
+    }
+    
+    conn.close()
+    
+    return render_template('admin_event_report.html',
+                         event=event,
+                         stocks=stock_data,
+                         summary=summary)
+
+# ============================================================================
 # PRODUCT CATEGORIES ROUTES
 # ============================================================================
 

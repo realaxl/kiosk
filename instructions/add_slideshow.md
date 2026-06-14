@@ -1,4 +1,4 @@
-Add a SLIDESHOW/diashow feature to the Gallery main page:
+Add a Slideshow/Diashow feature to the Gallery main page:
 
 - add a "Slideshow" button left to the admin button to the top bar
 - check if you can re-use existing endpoints instead of new ones. The product Detail modal should be sufficient
