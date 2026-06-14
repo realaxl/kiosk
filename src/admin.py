@@ -144,6 +144,29 @@ def delete_event(event_id):
 # EVENT REPORTING ROUTES
 # ============================================================================
 
+@admin_bp.route('/event-report')
+@require_admin
+def current_event_report():
+    """Event reporting page for the current event (from .env)"""
+    import os
+    conn = get_db_connection()
+    
+    # Get current event from .env
+    default_event_name = os.getenv('EVENT', '')
+    if not default_event_name:
+        conn.close()
+        return "No current event configured in .env", 404
+    
+    # Get the event ID
+    current_event = conn.execute('SELECT eventId FROM events WHERE name = ?', (default_event_name,)).fetchone()
+    conn.close()
+    
+    if current_event is None:
+        return f"Event '{default_event_name}' not found in database", 404
+    
+    # Redirect to the specific event report
+    return redirect(url_for('admin.event_report', event_id=current_event['eventId']))
+
 @admin_bp.route('/events/<int:event_id>/report')
 @require_admin
 def event_report(event_id):
