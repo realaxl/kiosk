@@ -167,7 +167,7 @@
                         <tr>
                             <td class="product-thumbnail-cell">
                                 {% if stock.productImage %}
-                                <img src="{{ url_for('get_image', filename=stock.productImage) }}"
+                                <img src="{{ url_for('serve_image', filename=stock.productImage) }}"
                                      alt="{{ stock.productName }}"
                                      class="product-thumbnail"
                                      onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
