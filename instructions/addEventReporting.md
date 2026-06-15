@@ -20,3 +20,12 @@ check if you can reduce the amount of individual CSS definitions by using the ce
     - number of products remaining in stock
     - number of products sold from stock
     - price / Verkaufspreis
+
+
+-------------------------------------------------------------------------------
+
+2026-06-15
+## amend the Event Reporting page
+- replace the "Back to events" button with a "back to dashboard" button
+- move the title of the event to to header of the page, append to "Event-Bericht"
+- 
