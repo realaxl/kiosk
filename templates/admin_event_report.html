@@ -18,6 +18,36 @@
             gap: 20px;
         }
         
+        /* Product thumbnail styles */
+        .product-thumbnail {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+            background: #f8f9fa;
+        }
+        
+        .product-thumbnail-cell {
+            width: 70px;
+            padding: 8px !important;
+            text-align: center;
+            vertical-align: middle;
+        }
+        
+        .product-thumbnail-placeholder {
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 24px;
+            color: #adb5bd;
+        }
+        
         @media print {
             .header, .btn {
                 display: none !important;
@@ -26,6 +56,10 @@
             .report-section {
                 box-shadow: none;
                 page-break-inside: avoid;
+            }
+            
+            .product-thumbnail {
+                border: 1px solid #999;
             }
         }
     </style>
@@ -119,6 +153,7 @@
                 <table>
                     <thead>
                         <tr>
+                            <th style="width: 70px;">Bild</th>
                             <th>Produkt</th>
                             <th style="text-align: center;">Anfangsbestand</th>
                             <th style="text-align: center;">Verbleibend</th>
@@ -130,6 +165,17 @@
                     <tbody>
                         {% for stock in stocks %}
                         <tr>
+                            <td class="product-thumbnail-cell">
+                                {% if stock.productImage %}
+                                <img src="{{ url_for('get_image', filename=stock.productImage) }}"
+                                     alt="{{ stock.productName }}"
+                                     class="product-thumbnail"
+                                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                <div class="product-thumbnail-placeholder" style="display: none;">📦</div>
+                                {% else %}
+                                <div class="product-thumbnail-placeholder">📦</div>
+                                {% endif %}
+                            </td>
                             <td>
                                 <div class="product-name">{{ stock.productName }}</div>
                                 {% if stock.productDescription %}
@@ -152,6 +198,7 @@
                     </tbody>
                     <tfoot>
                         <tr style="font-weight: bold; background: #f8f9fa;">
+                            <td></td>
                             <td>Gesamt</td>
                             <td style="text-align: center;">{{ summary.total_initial_stock }}</td>
                             <td style="text-align: center;">{{ summary.total_remaining_stock }}</td>
