@@ -14,3 +14,6 @@ Plane eine Erweiterung um folgendes Problem:
   - gehören zu einer Kategorie
   - sind in der Gallery gekennzeichnet
   - in der Gallery werden die Verkaufspreise, nicht die Einkaufspreise addiert
+
+Kits sollen grundsätzlich wie Produkte behandelt werden
+  - können zum Stock hinzugefügt werden
