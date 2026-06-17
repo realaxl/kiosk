@@ -362,6 +362,20 @@ def products():
     conn.close()
     return render_template('admin_products.html', products=products, categories=categories)
 
+@admin_bp.route('/api/products', methods=['GET'])
+@require_admin
+def get_all_products():
+    """Get all products as JSON"""
+    conn = get_db_connection()
+    products = conn.execute('''
+        SELECT p.*, pc.name as categoryName
+        FROM products p
+        LEFT JOIN productCategories pc ON p.productCategoryId = pc.productCategoryId
+        ORDER BY p.name
+    ''').fetchall()
+    conn.close()
+    return jsonify([dict(p) for p in products])
+
 @admin_bp.route('/api/products/<int:product_id>', methods=['GET'])
 @require_admin
 def get_product(product_id):
@@ -452,6 +466,137 @@ def delete_product(product_id):
     except Exception as e:
         conn.close()
         return jsonify({'error': str(e)}), 500
+# ============================================================================
+# PRODUCT RELATIONS ROUTES
+# ============================================================================
+
+@admin_bp.route('/api/products/<int:product_id>/relations', methods=['GET'])
+@require_admin
+def get_product_relations(product_id):
+    """Get all relations for a specific product (both from and to)"""
+    conn = get_db_connection()
+    
+    # Get relations where this product is the source (from)
+    from_relations = conn.execute('''
+        SELECT pr.*, p.name as toProductName, p.image as toProductImage
+        FROM productRelations pr
+        JOIN products p ON pr.toProductId = p.productId
+        WHERE pr.fromProductId = ? AND pr.active = 1
+        ORDER BY p.name
+    ''', (product_id,)).fetchall()
+    
+    # Get relations where this product is the target (to)
+    to_relations = conn.execute('''
+        SELECT pr.*, p.name as fromProductName, p.image as fromProductImage
+        FROM productRelations pr
+        JOIN products p ON pr.fromProductId = p.productId
+        WHERE pr.toProductId = ? AND pr.active = 1
+        ORDER BY p.name
+    ''', (product_id,)).fetchall()
+    
+    conn.close()
+    
+    return jsonify({
+        'fromRelations': [dict(r) for r in from_relations],
+        'toRelations': [dict(r) for r in to_relations]
+    })
+
+@admin_bp.route('/api/product-relations', methods=['POST'])
+@require_admin
+def create_product_relation():
+    """Create a new product relation"""
+    data = request.get_json()
+    conn = get_db_connection()
+    
+    # Validate that products exist
+    from_product = conn.execute('SELECT productId FROM products WHERE productId = ?', 
+                                (data.get('fromProductId'),)).fetchone()
+    to_product = conn.execute('SELECT productId FROM products WHERE productId = ?', 
+                              (data.get('toProductId'),)).fetchone()
+    
+    if not from_product or not to_product:
+        conn.close()
+        return jsonify({'error': 'One or both products not found'}), 404
+    
+    # Prevent self-referencing relations
+    if data.get('fromProductId') == data.get('toProductId'):
+        conn.close()
+        return jsonify({'error': 'Product cannot be related to itself'}), 400
+    
+    # Check for duplicate relation
+    existing = conn.execute('''
+        SELECT productRelationId FROM productRelations 
+        WHERE fromProductId = ? AND toProductId = ? AND active = 1
+    ''', (data.get('fromProductId'), data.get('toProductId'))).fetchone()
+    
+    if existing:
+        conn.close()
+        return jsonify({'error': 'Relation already exists'}), 400
+    
+    try:
+        cursor = conn.execute('''
+            INSERT INTO productRelations 
+            (fromProductId, toProductId, fromDescription, toDescription, note, active)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', (
+            data.get('fromProductId'),
+            data.get('toProductId'),
+            data.get('fromDescription', ''),
+            data.get('toDescription', ''),
+            data.get('note', ''),
+            1
+        ))
+        conn.commit()
+        relation_id = cursor.lastrowid
+        conn.close()
+        return jsonify({'success': True, 'productRelationId': relation_id})
+    except Exception as e:
+        conn.close()
+        return jsonify({'error': str(e)}), 500
+
+@admin_bp.route('/api/product-relations/<int:relation_id>', methods=['PUT'])
+@require_admin
+def update_product_relation(relation_id):
+    """Update a product relation"""
+    data = request.get_json()
+    conn = get_db_connection()
+    
+    try:
+        conn.execute('''
+            UPDATE productRelations
+            SET fromDescription = ?, toDescription = ?, note = ?, active = ?
+            WHERE productRelationId = ?
+        ''', (
+            data.get('fromDescription'),
+            data.get('toDescription'),
+            data.get('note'),
+            1 if data.get('active') else 0,
+            relation_id
+        ))
+        conn.commit()
+        conn.close()
+        return jsonify({'success': True})
+    except Exception as e:
+        conn.close()
+        return jsonify({'error': str(e)}), 500
+
+@admin_bp.route('/api/product-relations/<int:relation_id>', methods=['DELETE'])
+@require_admin
+def delete_product_relation(relation_id):
+    """Delete (soft delete) a product relation"""
+    conn = get_db_connection()
+    try:
+        conn.execute('''
+            UPDATE productRelations SET active = 0 
+            WHERE productRelationId = ?
+        ''', (relation_id,))
+        conn.commit()
+        conn.close()
+        return jsonify({'success': True})
+    except Exception as e:
+        conn.close()
+        return jsonify({'error': str(e)}), 500
+
 
 # ============================================================================
 # STOCKS ROUTES

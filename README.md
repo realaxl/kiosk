@@ -1,7 +1,9 @@
-# blinkyparts Kiosk - test with IBM BOB (kiosk-with-bob)
+# *blinkyparts Kiosk* - test with IBM BOB (kiosk-with-bob)
 
 2026-05
+[Kanban](https://cryptpad.fr/kanban/#/3/kanban/edit/c6d25d7dc8eb86981e3830eec2e09b86/)
 
+# Specs
 - create a Kiosk app for a small sales kiosk
 - runs stand alone on Windows 11 and a Raspberry Pi
 - local SQL database (SQLite)

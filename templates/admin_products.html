@@ -162,6 +162,11 @@
             overflow-y: auto;
         }
         
+        /* Relation modal should be above product modal */
+        #relationModal {
+            z-index: 1100;
+        }
+        
         .modal.active {
             display: flex;
             align-items: center;
@@ -372,7 +377,12 @@
                         </div>
                     </div>
                     <div class="product-actions">
-                        <button class="btn btn-primary btn-sm" onclick="openEditModal({{ product['productId'] }})">Bearbeiten</button>
+                        <button class="btn btn-primary btn-sm" onclick="openEditModal({{ product['productId'] }})">
+                            <i class="bi bi-pencil"></i> Eigenschaften
+                        </button>
+                        <button class="btn btn-info btn-sm" onclick="openRelationsModal({{ product['productId'] }})">
+                            <i class="bi bi-link-45deg"></i> Beziehungen
+                        </button>
                         {% if product['active'] %}
                         <button class="btn btn-warning btn-sm" onclick="toggleProductStatus({{ product['productId'] }}, false)">Deaktivieren</button>
                         {% else %}
@@ -504,6 +514,83 @@
         </div>
     </div>
     
+    <!-- Product Relations Modal -->
+    <div id="relationsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="relationsModalTitle">Produktbeziehungen</h2>
+                <span class="close" onclick="closeRelationsModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <!-- From Relations -->
+                <div class="relations-section" style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                    <h4 style="font-size: 14px; font-weight: 600; color: #495057; margin-bottom: 10px;">Dieses Produkt benötigt:</h4>
+                    <div id="fromRelationsList" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px;"></div>
+                    <button type="button" class="btn btn-primary btn-sm" onclick="addRelation()">
+                        <i class="bi bi-plus-circle"></i> Beziehung hinzufügen
+                    </button>
+                </div>
+                
+                <!-- To Relations (read-only) -->
+                <div class="relations-section" style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
+                    <h4 style="font-size: 14px; font-weight: 600; color: #495057; margin-bottom: 10px;">Wird benötigt in:</h4>
+                    <div id="toRelationsList" style="display: flex; flex-direction: column; gap: 10px;"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeRelationsModal()">Schließen</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Relation Editor Modal -->
+    <div id="relationModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Produktbeziehung</h2>
+                <span class="close" onclick="closeRelationModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="relationForm">
+                    <input type="hidden" id="relationId">
+                    <input type="hidden" id="relationFromProductId">
+                    
+                    <div class="form-group">
+                        <label for="relationToProductId">Zielprodukt *</label>
+                        <select id="relationToProductId" required>
+                            <option value="">-- Produkt auswählen --</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="relationFromDescription">Beschreibung (von → zu)</label>
+                        <input type="text" id="relationFromDescription" placeholder="z.B. benötigt, erfordert">
+                        <small style="font-size: 12px; color: #666; display: block; margin-top: 5px;">
+                            Anzeige: "[Dieses Produkt] [Beschreibung] [Zielprodukt]"
+                        </small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="relationToDescription">Beschreibung (zu → von)</label>
+                        <input type="text" id="relationToDescription" placeholder="z.B. wird benötigt in">
+                        <small style="font-size: 12px; color: #666; display: block; margin-top: 5px;">
+                            Anzeige: "[Zielprodukt] [Beschreibung] [Dieses Produkt]"
+                        </small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="relationNote">Notiz</label>
+                        <textarea id="relationNote" rows="2"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeRelationModal()">Abbrechen</button>
+                <button class="btn btn-primary" onclick="saveRelation()">Speichern</button>
+            </div>
+        </div>
+    </div>
+    
     <script>
         let isEditMode = false;
         
@@ -541,6 +628,7 @@
             document.getElementById('productId').value = '';
             document.getElementById('productIdDisplay').value = 'Wird automatisch vergeben';
             document.getElementById('productActive').checked = true;
+            document.getElementById('relationsSection').style.display = 'none';
             document.getElementById('productModal').classList.add('active');
         }
         
@@ -663,15 +751,254 @@
             document.getElementById('imagePreviewModal').classList.remove('active');
         }
         
+        // ============================================================================
+        // PRODUCT RELATIONS FUNCTIONS
+        // ============================================================================
+        
+        let currentProductId = null;
+        let currentProductName = '';
+        let currentRelations = { from: [], to: [] };
+        
+        async function openRelationsModal(productId) {
+            currentProductId = productId;
+            
+            try {
+                // Get product details for the title
+                const productResponse = await fetch(`/admin/api/products/${productId}`);
+                if (!productResponse.ok) throw new Error('Produkt konnte nicht geladen werden');
+                const product = await productResponse.json();
+                currentProductName = product.name;
+                
+                // Update modal title
+                document.getElementById('relationsModalTitle').textContent = `Produktbeziehungen: ${currentProductName}`;
+                
+                // Load relations
+                await loadProductRelations(productId);
+                
+                // Show modal
+                document.getElementById('relationsModal').classList.add('active');
+            } catch (error) {
+                alert('Fehler beim Laden der Beziehungen: ' + error.message);
+            }
+        }
+        
+        function closeRelationsModal() {
+            document.getElementById('relationsModal').classList.remove('active');
+        }
+        
+        async function loadProductRelations(productId) {
+            try {
+                const response = await fetch(`/admin/api/products/${productId}/relations`);
+                const data = await response.json();
+                
+                currentRelations = {
+                    from: data.fromRelations || [],
+                    to: data.toRelations || []
+                };
+                
+                renderRelations();
+            } catch (error) {
+                console.error('Error loading relations:', error);
+            }
+        }
+        
+        function renderRelations() {
+            // Render "from" relations using .item class from admin.css
+            const fromList = document.getElementById('fromRelationsList');
+            if (currentRelations.from.length === 0) {
+                fromList.innerHTML = '<p style="font-size: 13px; color: #999; margin: 0;">Keine Beziehungen</p>';
+            } else {
+                fromList.innerHTML = currentRelations.from.map(rel => `
+                    <div class="item">
+                        <div class="item-thumbnail">
+                            ${rel.toProductImage ?
+                                `<img src="/images/${rel.toProductImage}" alt="${rel.toProductName}">` :
+                                '📦'
+                            }
+                        </div>
+                        <div class="item-info">
+                            <div class="item-name">${rel.toProductName}</div>
+                            ${rel.fromDescription ?
+                                `<div class="item-description">${rel.fromDescription}</div>` :
+                                ''
+                            }
+                        </div>
+                        <div class="item-actions">
+                            <button class="btn btn-primary btn-sm" onclick="editRelation(${rel.productRelationId})">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteRelation(${rel.productRelationId})">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            
+            // Render "to" relations (read-only)
+            const toList = document.getElementById('toRelationsList');
+            if (currentRelations.to.length === 0) {
+                toList.innerHTML = '<p style="font-size: 13px; color: #999; margin: 0;">Keine Beziehungen</p>';
+            } else {
+                toList.innerHTML = currentRelations.to.map(rel => `
+                    <div class="item">
+                        <div class="item-thumbnail">
+                            ${rel.fromProductImage ?
+                                `<img src="/images/${rel.fromProductImage}" alt="${rel.fromProductName}">` :
+                                '📦'
+                            }
+                        </div>
+                        <div class="item-info">
+                            <div class="item-name">${rel.fromProductName}</div>
+                            ${rel.toDescription ?
+                                `<div class="item-description">${rel.toDescription}</div>` :
+                                ''
+                            }
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+        
+        function addRelation() {
+            document.getElementById('relationId').value = '';
+            document.getElementById('relationFromProductId').value = currentProductId;
+            document.getElementById('relationToProductId').value = '';
+            document.getElementById('relationFromDescription').value = 'benötigt';
+            document.getElementById('relationToDescription').value = 'wird benötigt in';
+            document.getElementById('relationNote').value = '';
+            
+            loadProductsForRelation();
+            document.getElementById('relationModal').classList.add('active');
+        }
+        
+        async function editRelation(relationId) {
+            const relation = currentRelations.from.find(r => r.productRelationId === relationId);
+            if (!relation) return;
+            
+            document.getElementById('relationId').value = relationId;
+            document.getElementById('relationFromProductId').value = currentProductId;
+            document.getElementById('relationToProductId').value = relation.toProductId;
+            document.getElementById('relationFromDescription').value = relation.fromDescription || '';
+            document.getElementById('relationToDescription').value = relation.toDescription || '';
+            document.getElementById('relationNote').value = relation.note || '';
+            
+            await loadProductsForRelation();
+            document.getElementById('relationModal').classList.add('active');
+        }
+        
+        async function loadProductsForRelation() {
+            try {
+                const response = await fetch('/admin/api/products');
+                const products = await response.json();
+                
+                const select = document.getElementById('relationToProductId');
+                const currentValue = select.value;
+                select.innerHTML = '<option value="">-- Produkt auswählen --</option>';
+                
+                products
+                    .filter(p => p.productId !== currentProductId && p.active === 1)
+                    .forEach(product => {
+                        const option = document.createElement('option');
+                        option.value = product.productId;
+                        option.textContent = product.name;
+                        if (product.productId == currentValue) {
+                            option.selected = true;
+                        }
+                        select.appendChild(option);
+                    });
+            } catch (error) {
+                console.error('Error loading products:', error);
+            }
+        }
+        
+        async function saveRelation() {
+            const relationId = document.getElementById('relationId').value;
+            const data = {
+                fromProductId: parseInt(document.getElementById('relationFromProductId').value),
+                toProductId: parseInt(document.getElementById('relationToProductId').value),
+                fromDescription: document.getElementById('relationFromDescription').value,
+                toDescription: document.getElementById('relationToDescription').value,
+                note: document.getElementById('relationNote').value
+            };
+            
+            if (!data.toProductId) {
+                alert('Bitte wählen Sie ein Zielprodukt aus.');
+                return;
+            }
+            
+            try {
+                let response;
+                if (relationId) {
+                    response = await fetch(`/admin/api/product-relations/${relationId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                } else {
+                    response = await fetch('/admin/api/product-relations', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                }
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    closeRelationModal();
+                    await loadProductRelations(currentProductId);
+                } else {
+                    alert(result.error || 'Fehler beim Speichern');
+                }
+            } catch (error) {
+                console.error('Error saving relation:', error);
+                alert('Fehler beim Speichern');
+            }
+        }
+        
+        async function deleteRelation(relationId) {
+            if (!confirm('Beziehung wirklich löschen?')) return;
+            
+            try {
+                const response = await fetch(`/admin/api/product-relations/${relationId}`, {
+                    method: 'DELETE'
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    await loadProductRelations(currentProductId);
+                    // alert('Beziehung gelöscht');
+                } else {
+                    alert(result.error || 'Fehler beim Löschen');
+                }
+            } catch (error) {
+                console.error('Error deleting relation:', error);
+                alert('Fehler beim Löschen');
+            }
+        }
+        
+        function closeRelationModal() {
+            document.getElementById('relationModal').classList.remove('active');
+        }
+        
+        
         // Close modals when clicking outside
         window.onclick = function(event) {
             const productModal = document.getElementById('productModal');
             const imageModal = document.getElementById('imagePreviewModal');
-            if (event.target === productModal) {
+            const relationModal = document.getElementById('relationModal');
+            
+            // Only close product modal if relation modal is not active
+            if (event.target === productModal && !relationModal.classList.contains('active')) {
                 closeModal();
             }
             if (event.target === imageModal) {
                 closeImagePreview();
+            }
+            if (event.target === relationModal) {
+                closeRelationModal();
             }
         };
         
