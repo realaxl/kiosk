@@ -169,7 +169,7 @@ def index():
         # No event found, show all active products with purchasePrice as fallback
         products = conn.execute('SELECT *, purchasePrice as eventSalePrice FROM products WHERE active = 1').fetchall()
     
-    # Get tags for each product
+    # Get tags and relations for each product
     products_with_tags = []
     for product in products:
         product_dict = dict(product)
@@ -181,12 +181,24 @@ def index():
         ''', (product['productId'],)).fetchall()
         
         product_dict['tags'] = [dict(tag) for tag in tags]
+        
+        # Fetch relations for this product (where this product is the source)
+        relations = conn.execute('''
+            SELECT pr.*, p.name as relatedProductName, p.image as relatedProductImage
+            FROM productRelations pr
+            JOIN products p ON pr.toProductId = p.productId
+            WHERE pr.fromProductId = ? AND pr.active = 1 AND p.active = 1
+            ORDER BY p.name
+        ''', (product['productId'],)).fetchall()
+        
+        product_dict['relations'] = [dict(rel) for rel in relations]
         products_with_tags.append(product_dict)
         
         # Debug output
         print(f"[DEBUG] Product: {product_dict['name']}")
         print(f"[DEBUG]   productId: {product_dict['productId']}")
         print(f"[DEBUG]   tags: {product_dict['tags']}")
+        print(f"[DEBUG]   relations: {len(product_dict['relations'])} relation(s)")
     
     conn.close()
     
@@ -283,6 +295,17 @@ def get_product(product_id):
     ''', (product_id,)).fetchall()
     
     product_dict['tags'] = [dict(tag) for tag in tags]
+    
+    # Get relations for this product (where this product is the source)
+    relations = conn.execute('''
+        SELECT pr.*, p.name as relatedProductName, p.image as relatedProductImage
+        FROM productRelations pr
+        JOIN products p ON pr.toProductId = p.productId
+        WHERE pr.fromProductId = ? AND pr.active = 1 AND p.active = 1
+        ORDER BY p.name
+    ''', (product_id,)).fetchall()
+    
+    product_dict['relations'] = [dict(rel) for rel in relations]
     
     conn.close()
     return jsonify(product_dict)

@@ -216,20 +216,22 @@
         <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
             {% for product in products %}
             <div class="col">
-                <div class="card product-card" onclick="openProductModal({{ product['productId'] }})">
+                <div class="card product-card" onclick="openProductModal({{ product['productId'] }})" style="position: relative;">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <span>{{ product['name'] }}</span>
-                        <!-- DEBUG: tags={{ product.get('tags', 'NO TAGS KEY') }} -->
-                        {% if 'tags' in product and product['tags']|length > 0 %}
-                        <!-- DEBUG: Rendering tags for {{ product['name'] }} -->
-                        <div class="d-flex gap-1">
+                        <!-- Tags and Relations Badges -->
+                        <div class="d-flex gap-1 flex-wrap">
+                            {% if 'tags' in product and product['tags']|length > 0 %}
                             {% for tag in product['tags'] %}
                             <span class="badge bg-info text-dark badge-sm">{{ tag['value'] }}</span>
                             {% endfor %}
+                            {% endif %}
+                            {% if 'relations' in product and product['relations']|length > 0 %}
+                            <span class="badge bg-primary badge-sm">
+                                <i class="bi bi-link-45deg"></i> {{ product['relations']|length }}
+                            </span>
+                            {% endif %}
                         </div>
-                        {% else %}
-                        <!-- DEBUG: No tags or empty for {{ product['name'] }} -->
-                        {% endif %}
                     </div>
                     <div class="card-body p-0">
                         {% if product['image'] %}
@@ -310,6 +312,12 @@
                                 <p id="modalManualUrlText" class="mb-0 mt-2 small text-muted"></p>
                             </div>
                         </div>
+                    </div>
+                    
+                    <!-- Product Relations -->
+                    <div class="mb-3" id="relationsSection" style="display: none;">
+                        <label class="form-label fw-bold">Benötigte Produkte:</label>
+                        <div id="modalProductRelations"></div>
                     </div>
                     
                     <!-- Product Category -->
@@ -453,6 +461,53 @@
                     manualSection.style.display = 'none';
                 }
                 
+                // Show product relations
+                const relationsSection = document.getElementById('relationsSection');
+                const relationsContainer = document.getElementById('modalProductRelations');
+                relationsContainer.innerHTML = '';
+                
+                if (product.relations && product.relations.length > 0) {
+                    product.relations.forEach(rel => {
+                        const relationDiv = document.createElement('div');
+                        relationDiv.style.cssText = 'display: flex; align-items: center; gap: 10px; padding: 10px; background: white; border-radius: 6px; margin-bottom: 8px; border: 1px solid #dee2e6;';
+                        
+                        // Thumbnail
+                        const thumbnail = document.createElement('div');
+                        if (rel.relatedProductImage) {
+                            const img = document.createElement('img');
+                            img.src = `/images/${rel.relatedProductImage}`;
+                            img.style.cssText = 'width: 50px; height: 50px; object-fit: cover; border-radius: 4px;';
+                            thumbnail.appendChild(img);
+                        } else {
+                            thumbnail.textContent = '📦';
+                            thumbnail.style.cssText = 'width: 50px; height: 50px; background: #e9ecef; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 24px;';
+                        }
+                        relationDiv.appendChild(thumbnail);
+                        
+                        // Info
+                        const info = document.createElement('div');
+                        info.style.flex = '1';
+                        
+                        const name = document.createElement('div');
+                        name.style.fontWeight = '600';
+                        name.textContent = rel.relatedProductName;
+                        info.appendChild(name);
+                        
+                        if (rel.fromDescription) {
+                            const desc = document.createElement('div');
+                            desc.style.cssText = 'font-size: 13px; color: #6c757d; font-style: italic;';
+                            desc.textContent = rel.fromDescription;
+                            info.appendChild(desc);
+                        }
+                        
+                        relationDiv.appendChild(info);
+                        relationsContainer.appendChild(relationDiv);
+                    });
+                    relationsSection.style.display = 'block';
+                } else {
+                    relationsSection.style.display = 'none';
+                }
+                
                 // Show modal
                 productModal.show();
             } catch (error) {
@@ -562,6 +617,27 @@
                     tagsHtml += '</div>';
                 }
                 
+                // Build relations HTML
+                let relationsHtml = '';
+                if (product.relations && product.relations.length > 0) {
+                    relationsHtml = '<div style="margin-top: 1rem;"><label class="fw-bold" style="font-size: 1.2rem;">Benötigte Produkte:</label><div style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem;">';
+                    product.relations.forEach(rel => {
+                        relationsHtml += `
+                            <div style="display: flex; align-items: center; gap: 10px; padding: 10px; background: #f8f9fa; border-radius: 6px; border: 1px solid #dee2e6;">
+                                ${rel.relatedProductImage ?
+                                    `<img src="/images/${rel.relatedProductImage}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;">` :
+                                    '<div style="width: 50px; height: 50px; background: #e9ecef; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 24px;">📦</div>'
+                                }
+                                <div style="flex: 1;">
+                                    <div style="font-weight: 600;">${rel.relatedProductName}</div>
+                                    ${rel.fromDescription ? `<div style="font-size: 13px; color: #6c757d; font-style: italic;">${rel.fromDescription}</div>` : ''}
+                                </div>
+                            </div>
+                        `;
+                    });
+                    relationsHtml += '</div></div>';
+                }
+                
                 // Build manual section HTML
                 let manualHtml = '';
                 if (product.manualUrl) {
@@ -602,6 +678,7 @@
                                 <label class="fw-bold">Verkaufspreis:</label>
                                 <div class="slideshow-price">${price} €</div>
                             </div>
+                            ${relationsHtml}
                             ${manualHtml}
                         </div>
                     </div>

@@ -5,6 +5,7 @@ erDiagram
      productCategories ||--o{ products : has
      tags ||--o{ products : has
      carts ||--o{ sales : contains
+     productRelations ||--|| products : has
 
      events {
          int eventId PK
@@ -35,6 +36,17 @@ erDiagram
          string image
          string url
          string manualUrl
+         string note
+         int active
+     }
+
+
+     productRelations {
+         int productRelationId PK
+         int fromProductId FK
+         int toProductId FK
+         string fromDescription
+         string toDescription
          string note
          int active
      }

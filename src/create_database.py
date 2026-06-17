@@ -103,6 +103,21 @@ SCHEMA = {
         "foreign_keys": [
             "FOREIGN KEY (productId) REFERENCES products(productId)"
         ]
+    },
+    "productRelations": {
+        "columns": {
+            "productRelationId": "INTEGER PRIMARY KEY",
+            "fromProductId": "INTEGER NOT NULL",
+            "toProductId": "INTEGER NOT NULL",
+            "fromDescription": "TEXT",
+            "toDescription": "TEXT",
+            "note": "TEXT",
+            "active": "INTEGER NOT NULL DEFAULT 1"
+        },
+        "foreign_keys": [
+            "FOREIGN KEY (fromProductId) REFERENCES products(productId)",
+            "FOREIGN KEY (toProductId) REFERENCES products(productId)"
+        ]
     }
 }
 
