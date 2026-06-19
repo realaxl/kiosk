@@ -231,6 +231,11 @@
                                 <i class="bi bi-link-45deg"></i> {{ product['relations']|length }}
                             </span>
                             {% endif %}
+                            {% if 'reverseRelations' in product and product['reverseRelations']|length > 0 %}
+                            <span class="badge bg-success badge-sm">
+                                <i class="bi bi-arrow-left-right"></i> {{ product['reverseRelations']|length }}
+                            </span>
+                            {% endif %}
                         </div>
                     </div>
                     <div class="card-body p-0">
@@ -294,6 +299,13 @@
                         <p id="modalProductPrice" class="mb-0 h4 text-success"></p>
                     </div>
                     
+                    <!-- Total Price (with related products) -->
+                    <div class="mb-3" id="totalPriceSection" style="display: none;">
+                        <label class="form-label fw-bold">Gesamtpreis (inkl. benötigter Produkte):</label>
+                        <p id="modalTotalPrice" class="mb-0 h3 text-primary"></p>
+                        <small id="totalPriceBreakdown" class="text-muted"></small>
+                    </div>
+                    
                     <!-- Tags -->
                     <div class="mb-3" id="tagsSection" style="display: none;">
                         <label class="form-label fw-bold">Tags:</label>
@@ -318,6 +330,12 @@
                     <div class="mb-3" id="relationsSection" style="display: none;">
                         <label class="form-label fw-bold">Benötigte Produkte:</label>
                         <div id="modalProductRelations"></div>
+                    </div>
+                    
+                    <!-- Reverse Product Relations -->
+                    <div class="mb-3" id="reverseRelationsSection" style="display: none;">
+                        <label class="form-label fw-bold">Wird benötigt in:</label>
+                        <div id="modalReverseRelations"></div>
                     </div>
                     
                     <!-- Product Category -->
@@ -380,11 +398,13 @@
                 // Check stock availability
                 const outOfStockMsg = document.getElementById('outOfStockMessage');
                 const priceSection = document.getElementById('priceSection');
+                const totalPriceSection = document.getElementById('totalPriceSection');
                 
                 if (!product.stock || product.stock.currentNumberInStock <= 0) {
                     // Out of stock
                     outOfStockMsg.style.display = 'block';
                     priceSection.style.display = 'none';
+                    totalPriceSection.style.display = 'none';
                 } else {
                     // In stock
                     outOfStockMsg.style.display = 'none';
@@ -393,6 +413,33 @@
                     // Show sale price from stocks table
                     const price = product.stock.salePrice || 0;
                     document.getElementById('modalProductPrice').textContent = price.toFixed(2) + ' €';
+                    
+                    // Calculate total price including related products
+                    let totalPrice = price;
+                    let priceBreakdown = `Produkt: ${price.toFixed(2)} €`;
+                    
+                    if (product.relations && product.relations.length > 0) {
+                        let relatedTotal = 0;
+                        let relatedNames = [];
+                        product.relations.forEach(rel => {
+                            if (rel.relatedProductPrice) {
+                                relatedTotal += rel.relatedProductPrice;
+                                relatedNames.push(`${rel.relatedProductName} (${rel.relatedProductPrice.toFixed(2)} €)`);
+                            }
+                        });
+                        
+                        if (relatedTotal > 0) {
+                            totalPrice += relatedTotal;
+                            priceBreakdown += ` + ${relatedNames.join(', ')}`;
+                            document.getElementById('modalTotalPrice').textContent = totalPrice.toFixed(2) + ' €';
+                            document.getElementById('totalPriceBreakdown').textContent = priceBreakdown;
+                            totalPriceSection.style.display = 'block';
+                        } else {
+                            totalPriceSection.style.display = 'none';
+                        }
+                    } else {
+                        totalPriceSection.style.display = 'none';
+                    }
                 }
                 
                 // Show product image (cached version)
@@ -500,12 +547,66 @@
                             info.appendChild(desc);
                         }
                         
+                        if (rel.relatedProductPrice) {
+                            const price = document.createElement('div');
+                            price.style.cssText = 'font-size: 14px; color: #198754; font-weight: 600; margin-top: 4px;';
+                            price.textContent = rel.relatedProductPrice.toFixed(2) + ' €';
+                            info.appendChild(price);
+                        }
+                        
                         relationDiv.appendChild(info);
                         relationsContainer.appendChild(relationDiv);
                     });
                     relationsSection.style.display = 'block';
                 } else {
                     relationsSection.style.display = 'none';
+                }
+                
+                // Show reverse product relations
+                const reverseRelationsSection = document.getElementById('reverseRelationsSection');
+                const reverseRelationsContainer = document.getElementById('modalReverseRelations');
+                reverseRelationsContainer.innerHTML = '';
+                
+                if (product.reverseRelations && product.reverseRelations.length > 0) {
+                    product.reverseRelations.forEach(rel => {
+                        const relationDiv = document.createElement('div');
+                        relationDiv.style.cssText = 'display: flex; align-items: center; gap: 10px; padding: 10px; background: white; border-radius: 6px; margin-bottom: 8px; border: 1px solid #dee2e6;';
+                        
+                        // Thumbnail
+                        const thumbnail = document.createElement('div');
+                        if (rel.fromProductImage) {
+                            const img = document.createElement('img');
+                            img.src = `/images/${rel.fromProductImage}`;
+                            img.style.cssText = 'width: 50px; height: 50px; object-fit: cover; border-radius: 4px;';
+                            thumbnail.appendChild(img);
+                        } else {
+                            thumbnail.textContent = '📦';
+                            thumbnail.style.cssText = 'width: 50px; height: 50px; background: #e9ecef; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 24px;';
+                        }
+                        relationDiv.appendChild(thumbnail);
+                        
+                        // Info
+                        const info = document.createElement('div');
+                        info.style.flex = '1';
+                        
+                        const name = document.createElement('div');
+                        name.style.fontWeight = '600';
+                        name.textContent = rel.fromProductName;
+                        info.appendChild(name);
+                        
+                        if (rel.toDescription) {
+                            const desc = document.createElement('div');
+                            desc.style.cssText = 'font-size: 13px; color: #6c757d; font-style: italic;';
+                            desc.textContent = rel.toDescription;
+                            info.appendChild(desc);
+                        }
+                        
+                        relationDiv.appendChild(info);
+                        reverseRelationsContainer.appendChild(relationDiv);
+                    });
+                    reverseRelationsSection.style.display = 'block';
+                } else {
+                    reverseRelationsSection.style.display = 'none';
                 }
                 
                 // Show modal
@@ -619,9 +720,14 @@
                 
                 // Build relations HTML
                 let relationsHtml = '';
+                let totalPrice = product.stock && product.stock.salePrice ? product.stock.salePrice : 0;
+                
                 if (product.relations && product.relations.length > 0) {
                     relationsHtml = '<div style="margin-top: 1rem;"><label class="fw-bold" style="font-size: 1.2rem;">Benötigte Produkte:</label><div style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem;">';
                     product.relations.forEach(rel => {
+                        if (rel.relatedProductPrice) {
+                            totalPrice += rel.relatedProductPrice;
+                        }
                         relationsHtml += `
                             <div style="display: flex; align-items: center; gap: 10px; padding: 10px; background: #f8f9fa; border-radius: 6px; border: 1px solid #dee2e6;">
                                 ${rel.relatedProductImage ?
@@ -631,11 +737,33 @@
                                 <div style="flex: 1;">
                                     <div style="font-weight: 600;">${rel.relatedProductName}</div>
                                     ${rel.fromDescription ? `<div style="font-size: 13px; color: #6c757d; font-style: italic;">${rel.fromDescription}</div>` : ''}
+                                    ${rel.relatedProductPrice ? `<div style="font-size: 14px; color: #198754; font-weight: 600; margin-top: 4px;">${rel.relatedProductPrice.toFixed(2)} €</div>` : ''}
                                 </div>
                             </div>
                         `;
                     });
                     relationsHtml += '</div></div>';
+                }
+                
+                // Build reverse relations HTML
+                let reverseRelationsHtml = '';
+                if (product.reverseRelations && product.reverseRelations.length > 0) {
+                    reverseRelationsHtml = '<div style="margin-top: 1rem;"><label class="fw-bold" style="font-size: 1.2rem;">Wird benötigt in:</label><div style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem;">';
+                    product.reverseRelations.forEach(rel => {
+                        reverseRelationsHtml += `
+                            <div style="display: flex; align-items: center; gap: 10px; padding: 10px; background: #f8f9fa; border-radius: 6px; border: 1px solid #dee2e6;">
+                                ${rel.fromProductImage ?
+                                    `<img src="/images/${rel.fromProductImage}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;">` :
+                                    '<div style="width: 50px; height: 50px; background: #e9ecef; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 24px;">📦</div>'
+                                }
+                                <div style="flex: 1;">
+                                    <div style="font-weight: 600;">${rel.fromProductName}</div>
+                                    ${rel.toDescription ? `<div style="font-size: 13px; color: #6c757d; font-style: italic;">${rel.toDescription}</div>` : ''}
+                                </div>
+                            </div>
+                        `;
+                    });
+                    reverseRelationsHtml += '</div></div>';
                 }
                 
                 // Build manual section HTML
@@ -656,6 +784,26 @@
                 
                 // Get price from stock
                 const price = product.stock && product.stock.salePrice ? product.stock.salePrice.toFixed(2) : '0.00';
+                
+                // Build total price HTML if there are related products with prices
+                let totalPriceHtml = '';
+                if (totalPrice > parseFloat(price)) {
+                    // Build list of related product names with prices
+                    let relatedProductsList = [];
+                    product.relations.forEach(rel => {
+                        if (rel.relatedProductPrice) {
+                            relatedProductsList.push(`${rel.relatedProductName} (${rel.relatedProductPrice.toFixed(2)} €)`);
+                        }
+                    });
+                    
+                    totalPriceHtml = `
+                        <div style="margin-top: 1rem; padding: 1rem; background: #e7f3ff; border-radius: 8px; border: 2px solid #0d6efd;">
+                            <label class="fw-bold" style="font-size: 1.2rem;">Gesamtpreis (inkl. benötigter Produkte):</label>
+                            <div style="font-size: 2rem; color: #0d6efd; font-weight: bold; margin-top: 0.5rem;">${totalPrice.toFixed(2)} €</div>
+                            <div style="font-size: 0.9rem; color: #6c757d; margin-top: 0.5rem;">Produkt: ${price} € + ${relatedProductsList.join(', ')}</div>
+                        </div>
+                    `;
+                }
                 
                 slide.innerHTML = `
                     <div class="slideshow-product">
@@ -678,7 +826,9 @@
                                 <label class="fw-bold">Verkaufspreis:</label>
                                 <div class="slideshow-price">${price} €</div>
                             </div>
+                            ${totalPriceHtml}
                             ${relationsHtml}
+                            ${reverseRelationsHtml}
                             ${manualHtml}
                         </div>
                     </div>

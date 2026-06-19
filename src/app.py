@@ -184,14 +184,27 @@ def index():
         
         # Fetch relations for this product (where this product is the source)
         relations = conn.execute('''
-            SELECT pr.*, p.name as relatedProductName, p.image as relatedProductImage
+            SELECT pr.*, p.name as relatedProductName, p.image as relatedProductImage,
+                   s.salePrice as relatedProductPrice
             FROM productRelations pr
             JOIN products p ON pr.toProductId = p.productId
+            LEFT JOIN stocks s ON p.productId = s.productId AND s.eventId = ? AND s.active = 1
             WHERE pr.fromProductId = ? AND pr.active = 1 AND p.active = 1
+            ORDER BY p.name
+        ''', (current_event['eventId'] if current_event else 0, product['productId'])).fetchall()
+        
+        product_dict['relations'] = [dict(rel) for rel in relations]
+        
+        # Fetch reverse relations (where this product is the target)
+        reverse_relations = conn.execute('''
+            SELECT pr.*, p.name as fromProductName, p.image as fromProductImage
+            FROM productRelations pr
+            JOIN products p ON pr.fromProductId = p.productId
+            WHERE pr.toProductId = ? AND pr.active = 1 AND p.active = 1
             ORDER BY p.name
         ''', (product['productId'],)).fetchall()
         
-        product_dict['relations'] = [dict(rel) for rel in relations]
+        product_dict['reverseRelations'] = [dict(rel) for rel in reverse_relations]
         products_with_tags.append(product_dict)
         
         # Debug output
@@ -199,6 +212,7 @@ def index():
         print(f"[DEBUG]   productId: {product_dict['productId']}")
         print(f"[DEBUG]   tags: {product_dict['tags']}")
         print(f"[DEBUG]   relations: {len(product_dict['relations'])} relation(s)")
+        print(f"[DEBUG]   reverseRelations: {len(product_dict['reverseRelations'])} relation(s)")
     
     conn.close()
     
@@ -298,14 +312,27 @@ def get_product(product_id):
     
     # Get relations for this product (where this product is the source)
     relations = conn.execute('''
-        SELECT pr.*, p.name as relatedProductName, p.image as relatedProductImage
+        SELECT pr.*, p.name as relatedProductName, p.image as relatedProductImage,
+               s.salePrice as relatedProductPrice
         FROM productRelations pr
         JOIN products p ON pr.toProductId = p.productId
+        LEFT JOIN stocks s ON p.productId = s.productId AND s.eventId = ? AND s.active = 1
         WHERE pr.fromProductId = ? AND pr.active = 1 AND p.active = 1
+        ORDER BY p.name
+    ''', (current_event['eventId'] if current_event else 0, product_id)).fetchall()
+    
+    product_dict['relations'] = [dict(rel) for rel in relations]
+    
+    # Get reverse relations (where this product is the target)
+    reverse_relations = conn.execute('''
+        SELECT pr.*, p.name as fromProductName, p.image as fromProductImage
+        FROM productRelations pr
+        JOIN products p ON pr.fromProductId = p.productId
+        WHERE pr.toProductId = ? AND pr.active = 1 AND p.active = 1
         ORDER BY p.name
     ''', (product_id,)).fetchall()
     
-    product_dict['relations'] = [dict(rel) for rel in relations]
+    product_dict['reverseRelations'] = [dict(rel) for rel in reverse_relations]
     
     conn.close()
     return jsonify(product_dict)

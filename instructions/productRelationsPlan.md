@@ -663,3 +663,10 @@ Add to product detail modal and card:
 - Relations are bidirectional in display but directional in storage
 - Soft delete (active flag) for relations
 - Products can have multiple relations
+
+
+-------------------------------------------------------------------------------
+
+# amend templates/index.html:
+- add the reverse product relation to the product gallery modelcards and the slideshow
+- add a "total price" calculation to the product modal that includes the Verkaufspreis of the product and the Verkaufspreis of the related products, if any.
