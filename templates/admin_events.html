@@ -155,7 +155,7 @@
     
     <div class="container-custom{% if not full_width %} limited-width{% endif %}">
         <div class="toolbar">
-            <button class="btn btn-primary" onclick="alert('Event hinzufügen - Demnächst verfügbar')">+ Event hinzufügen</button>
+            <button class="btn btn-primary" onclick="openAddModal()"><i class="bi bi-plus-circle"></i> Event hinzufügen</button>
             <div class="toggle-container">
                 <label class="toggle">
                     <input type="checkbox" id="showAll" {% if show_all %}checked{% endif %}
@@ -207,11 +207,11 @@
         </div>
     </div>
     
-    <!-- Edit Event Modal -->
+    <!-- Add/Edit Event Modal -->
     <div id="eventModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Event bearbeiten</h2>
+                <h2 id="modalTitle">Event bearbeiten</h2>
                 <button class="close" onclick="closeModal()">&times;</button>
             </div>
             <div class="modal-body">
@@ -283,7 +283,33 @@
             });
         });
         
+        function openAddModal() {
+            // Set modal title for adding
+            document.getElementById('modalTitle').textContent = 'Event hinzufügen';
+            
+            // Clear form fields
+            document.getElementById('eventId').value = '';
+            document.getElementById('eventIdDisplay').value = 'Wird automatisch vergeben';
+            document.getElementById('eventName').value = '';
+            
+            // Set default date to today
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            document.getElementById('eventDate').value = `${year}-${month}-${day}`;
+            
+            document.getElementById('eventDescription').value = '';
+            document.getElementById('eventNote').value = '';
+            document.getElementById('eventActive').checked = true;
+            
+            document.getElementById('eventModal').classList.add('active');
+        }
+        
         async function openEditModal(eventId) {
+            // Set modal title for editing
+            document.getElementById('modalTitle').textContent = 'Event bearbeiten';
+            
             try {
                 const response = await fetch(`/admin/api/events/${eventId}`);
                 if (!response.ok) throw new Error('Event konnte nicht geladen werden');
@@ -331,11 +357,22 @@
             };
             
             try {
-                const response = await fetch(`/admin/api/events/${eventId}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
+                let response;
+                if (eventId) {
+                    // Update existing event
+                    response = await fetch(`/admin/api/events/${eventId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                } else {
+                    // Create new event
+                    response = await fetch('/admin/api/events', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                }
                 
                 if (!response.ok) throw new Error('Event konnte nicht gespeichert werden');
                 

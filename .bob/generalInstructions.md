@@ -1,6 +1,4 @@
-# general instructions
-
-
+# BOB instructions
 - for all HTML pages, use Bootstrap 5
 
 - for all visible elements in the HTML pages, use German language
@@ -22,7 +20,7 @@
     - "01.01.2023 12:34:56" - German format - for sales
 - for prices, assume Euro / € currency
 
-# command line scripts
+## command line scripts
 - for command line scripts, use Powershell script format
 - Python platform is  'win32
 - always fix UTF-8 issues
@@ -31,7 +29,7 @@ if sys.platform == 'win32':
     os.environ['PYTHONIOENCODING'] = 'utf-8'
 ```
 
-# UI elements on HTML pages
+## UI elements on HTML pages
 
 - for all delete "Löschen" Buttons:
   - do not delete immediately
