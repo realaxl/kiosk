@@ -16,6 +16,7 @@ SCHEMA = {
     "events": {
         "columns": {
             "eventId": "INTEGER PRIMARY KEY",
+            "uuid": "TEXT",
             "name": "TEXT NOT NULL",
             "timestamp": "INTEGER NOT NULL",
             "description": "TEXT",
@@ -26,6 +27,7 @@ SCHEMA = {
     "productCategories": {
         "columns": {
             "productCategoryId": "INTEGER PRIMARY KEY",
+            "uuid": "TEXT",
             "name": "TEXT NOT NULL",
             "description": "TEXT",
             "image": "TEXT",
@@ -36,6 +38,7 @@ SCHEMA = {
     "products": {
         "columns": {
             "productId": "INTEGER PRIMARY KEY",
+            "uuid": "TEXT",
             "productCategoryId": "INTEGER",
             "name": "TEXT NOT NULL",
             "timestamp": "INTEGER NOT NULL",
@@ -54,6 +57,7 @@ SCHEMA = {
     "stocks": {
         "columns": {
             "stockId": "INTEGER PRIMARY KEY",
+            "uuid": "TEXT",
             "eventId": "INTEGER NOT NULL",
             "productId": "INTEGER NOT NULL",
             "initialNumberInStock": "INTEGER NOT NULL",
@@ -71,6 +75,7 @@ SCHEMA = {
     "carts": {
         "columns": {
             "cartId": "INTEGER PRIMARY KEY",
+            "uuid": "TEXT",
             "name": "TEXT",
             "timestamp": "INTEGER NOT NULL",
             "note": "TEXT",
@@ -80,6 +85,7 @@ SCHEMA = {
     "sales": {
         "columns": {
             "saleId": "INTEGER PRIMARY KEY",
+            "uuid": "TEXT",
             "cartId": "INTEGER",
             "stockId": "INTEGER NOT NULL",
             "numberItemsSold": "INTEGER NOT NULL",
@@ -94,6 +100,7 @@ SCHEMA = {
     "tags": {
         "columns": {
             "tagId": "INTEGER PRIMARY KEY",
+            "uuid": "TEXT",
             "productId": "INTEGER NOT NULL",
             "name": "TEXT NOT NULL",
             "value": "TEXT",
@@ -107,6 +114,7 @@ SCHEMA = {
     "productRelations": {
         "columns": {
             "productRelationId": "INTEGER PRIMARY KEY",
+            "uuid": "TEXT",
             "fromProductId": "INTEGER NOT NULL",
             "toProductId": "INTEGER NOT NULL",
             "fromDescription": "TEXT",

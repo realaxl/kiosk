@@ -17,6 +17,7 @@ from pathlib import Path
 from PIL import Image
 import os
 import time
+import uuid
 from dotenv import load_dotenv
 from functools import wraps
 
@@ -102,10 +103,11 @@ def init_app():
         else:
             # Create new event
             timestamp = int(time.time())
+            event_uuid = str(uuid.uuid4())
             conn.execute('''
-                INSERT INTO events (name, timestamp, description, note, active)
-                VALUES (?, ?, ?, ?, ?)
-            ''', (EVENT_NAME, timestamp, '', '', 1))
+                INSERT INTO events (uuid, name, timestamp, description, note, active)
+                VALUES (?, ?, ?, ?, ?, ?)
+            ''', (event_uuid, EVENT_NAME, timestamp, '', '', 1))
             conn.commit()
             print(f"✓ Created new event: {EVENT_NAME}")
         

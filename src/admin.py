@@ -6,6 +6,7 @@ All routes require admin authentication
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for, session
 import sqlite3
 import time
+import uuid
 from pathlib import Path
 from functools import wraps
 
@@ -82,9 +83,10 @@ def create_event():
     
     try:
         cursor = conn.execute('''
-            INSERT INTO events (name, timestamp, description, note, active)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO events (uuid, name, timestamp, description, note, active)
+            VALUES (?, ?, ?, ?, ?, ?)
         ''', (
+            str(uuid.uuid4()),
             data.get('name'),
             data.get('timestamp', int(time.time())),
             data.get('description', ''),
@@ -282,9 +284,10 @@ def create_product_category():
     
     try:
         cursor = conn.execute('''
-            INSERT INTO productCategories (name, description, image, note, active)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO productCategories (uuid, name, description, image, note, active)
+            VALUES (?, ?, ?, ?, ?, ?)
         ''', (
+            str(uuid.uuid4()),
             data.get('name'),
             data.get('description', ''),
             data.get('image', ''),
@@ -431,9 +434,10 @@ def create_product():
     
     try:
         cursor = conn.execute('''
-            INSERT INTO products (productCategoryId, name, timestamp, purchasePrice, description, image, url, manualUrl, note, active)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO products (uuid, productCategoryId, name, timestamp, purchasePrice, description, image, url, manualUrl, note, active)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
+            str(uuid.uuid4()),
             data.get('productCategoryId'),
             data.get('name'),
             data.get('timestamp', int(time.time())),
@@ -535,10 +539,11 @@ def create_product_relation():
     
     try:
         cursor = conn.execute('''
-            INSERT INTO productRelations 
-            (fromProductId, toProductId, fromDescription, toDescription, note, active)
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO productRelations
+            (uuid, fromProductId, toProductId, fromDescription, toDescription, note, active)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
         ''', (
+            str(uuid.uuid4()),
             data.get('fromProductId'),
             data.get('toProductId'),
             data.get('fromDescription', ''),
@@ -674,9 +679,10 @@ def create_stock():
         print(f"Creating stock with data: {data}")
         
         cursor = conn.execute('''
-            INSERT INTO stocks (eventId, productId, initialNumberInStock, currentNumberInStock, salePrice, note, favorite, active)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO stocks (uuid, eventId, productId, initialNumberInStock, currentNumberInStock, salePrice, note, favorite, active)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
+            str(uuid.uuid4()),
             data.get('eventId'),
             data.get('productId'),
             data.get('initialNumberInStock', 0),
@@ -784,9 +790,10 @@ def create_sale():
     
     try:
         cursor = conn.execute('''
-            INSERT INTO sales (stockId, numberItemsSold, timestamp, note)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO sales (uuid, stockId, numberItemsSold, timestamp, note)
+            VALUES (?, ?, ?, ?, ?)
         ''', (
+            str(uuid.uuid4()),
             data.get('stockId'),
             data.get('numberItemsSold'),
             data.get('timestamp', int(time.time())),
@@ -998,9 +1005,10 @@ def create_tag():
     
     try:
         cursor = conn.execute('''
-            INSERT INTO tags (productId, name, value, note, active)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO tags (uuid, productId, name, value, note, active)
+            VALUES (?, ?, ?, ?, ?, ?)
         ''', (
+            str(uuid.uuid4()),
             data.get('productId'),
             data.get('name'),
             data.get('value', ''),

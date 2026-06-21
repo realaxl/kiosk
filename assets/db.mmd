@@ -9,6 +9,7 @@ erDiagram
 
      events {
          int eventId PK
+         string uuid
          string name
          int timestamp
          string description
@@ -19,6 +20,7 @@ erDiagram
 
      productCategories {
          int productCategoryId PK
+         string uuid
          string name
          string description
          string image
@@ -28,6 +30,7 @@ erDiagram
 
      products {
          int productId PK
+         string uuid
          int productCategoryId FK
          string name
          int timestamp
@@ -43,6 +46,7 @@ erDiagram
 
      productRelations {
          int productRelationId PK
+         string uuid
          int fromProductId FK
          int toProductId FK
          string fromDescription
@@ -53,6 +57,7 @@ erDiagram
 
      stocks {
          int stockId PK
+         string uuid
          int eventId FK
          int productId FK
          int initialNumberInStock
@@ -65,6 +70,7 @@ erDiagram
 
      carts {
          int cartId PK
+         string uuid
          string name
          int timestamp
          string note
@@ -73,6 +79,7 @@ erDiagram
      
      sales {
          int saleId PK
+         string uuid
          int cartId FK
          int stockId FK
          int numberItemsSold
@@ -82,6 +89,7 @@ erDiagram
 
      tags {
          int tagId PK
+         string uuid
          int productId FK
          string name
          string value
@@ -91,6 +99,7 @@ erDiagram
 
      config {
          int configId PK
+         string uuid
          string key
          string value
          string note
