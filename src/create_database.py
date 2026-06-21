@@ -111,6 +111,16 @@ SCHEMA = {
             "FOREIGN KEY (productId) REFERENCES products(productId)"
         ]
     },
+    "config": {
+        "columns": {
+            "configId": "INTEGER PRIMARY KEY",
+            "uuid": "TEXT",
+            "key": "TEXT NOT NULL",
+            "value": "TEXT",
+            "note": "TEXT",
+            "active": "INTEGER NOT NULL DEFAULT 1"
+        }
+    },
     "productRelations": {
         "columns": {
             "productRelationId": "INTEGER PRIMARY KEY",

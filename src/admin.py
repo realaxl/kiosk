@@ -1064,4 +1064,125 @@ def delete_tag(tag_id):
         conn.close()
         return jsonify({'error': str(e)}), 500
 
+# ============================================================================
+# CONFIG ROUTES
+# ============================================================================
+
+@admin_bp.route('/config')
+@require_admin
+def config():
+    """Configuration management page"""
+    conn = get_db_connection()
+    show_all = request.args.get('show_all', 'false') == 'true'
+    
+    if show_all:
+        configs = conn.execute('SELECT * FROM config ORDER BY key').fetchall()
+    else:
+        configs = conn.execute('SELECT * FROM config WHERE active = 1 ORDER BY key').fetchall()
+    
+    conn.close()
+    return render_template('admin_config.html', configs=configs, show_all=show_all)
+
+@admin_bp.route('/api/config', methods=['GET'])
+@require_admin
+def get_configs():
+    """Get all config entries"""
+    conn = get_db_connection()
+    configs = conn.execute('SELECT * FROM config ORDER BY key').fetchall()
+    conn.close()
+    return jsonify([dict(config) for config in configs])
+
+@admin_bp.route('/api/config/<int:config_id>', methods=['GET'])
+@require_admin
+def get_config(config_id):
+    """Get a single config entry by ID"""
+    conn = get_db_connection()
+    config = conn.execute('SELECT * FROM config WHERE configId = ?', (config_id,)).fetchone()
+    conn.close()
+    
+    if config is None:
+        return jsonify({'error': 'Config not found'}), 404
+    
+    return jsonify(dict(config))
+
+@admin_bp.route('/api/config', methods=['POST'])
+@require_admin
+def create_config():
+    """Create a new config entry"""
+    data = request.get_json()
+    conn = get_db_connection()
+    
+    try:
+        cursor = conn.execute('''
+            INSERT INTO config (uuid, key, value, note, active)
+            VALUES (?, ?, ?, ?, ?)
+        ''', (
+            str(uuid.uuid4()),
+            data.get('key'),
+            data.get('value', ''),
+            data.get('note', ''),
+            1 if data.get('active', True) else 0
+        ))
+        conn.commit()
+        config_id = cursor.lastrowid
+        conn.close()
+        return jsonify({'success': True, 'configId': config_id})
+    except Exception as e:
+        conn.close()
+        return jsonify({'error': str(e)}), 500
+
+@admin_bp.route('/api/config/<int:config_id>', methods=['PUT'])
+@require_admin
+def update_config(config_id):
+    """Update a config entry"""
+    data = request.get_json()
+    conn = get_db_connection()
+    
+    try:
+        # Build update query dynamically based on provided fields
+        update_fields = []
+        params = []
+        
+        if 'key' in data:
+            update_fields.append('key = ?')
+            params.append(data.get('key'))
+        if 'value' in data:
+            update_fields.append('value = ?')
+            params.append(data.get('value'))
+        if 'note' in data:
+            update_fields.append('note = ?')
+            params.append(data.get('note'))
+        if 'active' in data:
+            update_fields.append('active = ?')
+            params.append(1 if data.get('active') else 0)
+        
+        if not update_fields:
+            conn.close()
+            return jsonify({'error': 'No fields to update'}), 400
+        
+        params.append(config_id)
+        query = f"UPDATE config SET {', '.join(update_fields)} WHERE configId = ?"
+        
+        conn.execute(query, params)
+        conn.commit()
+        conn.close()
+        return jsonify({'success': True})
+    except Exception as e:
+        conn.close()
+        return jsonify({'error': str(e)}), 500
+
+@admin_bp.route('/api/config/<int:config_id>', methods=['DELETE'])
+@require_admin
+def delete_config(config_id):
+    """Delete a config entry"""
+    conn = get_db_connection()
+    try:
+        conn.execute('DELETE FROM config WHERE configId = ?', (config_id,))
+        conn.commit()
+        conn.close()
+        return jsonify({'success': True})
+    except Exception as e:
+        conn.close()
+        return jsonify({'error': str(e)}), 500
+
 # Made with Bob
